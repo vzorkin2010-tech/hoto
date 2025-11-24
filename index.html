@@ -337,12 +337,15 @@
             padding: var(--mobile-padding);
             background: var(--primary-bg);
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .content-section {
             display: none;
             height: 100%;
             flex-direction: column;
+            flex: 1;
         }
 
         .content-section.active {
@@ -367,6 +370,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            flex: 1;
         }
 
         .chat-item, 
@@ -468,6 +472,7 @@
             flex-direction: column;
             gap: 12px;
             -webkit-overflow-scrolling: touch;
+            min-height: 0;
         }
 
         .message {
@@ -511,17 +516,80 @@
             text-align: right;
         }
 
+        /* ИСПРАВЛЕННОЕ ПОЛЕ ВВОДА СООБЩЕНИЙ */
         .message-input-container {
             display: flex;
             gap: 12px;
-            padding-top: 16px;
+            padding: 16px 0;
             border-top: 1px solid var(--border-color);
-            align-items: center;
+            align-items: flex-end;
+            min-height: 70px;
+            flex-shrink: 0;
         }
 
-        .message-input-container .form-input {
+        .message-input-wrapper {
             flex: 1;
-            min-height: 44px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: var(--transition);
+            min-height: 50px;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .message-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            min-height: 50px;
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .send-button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
         }
 
         @media (max-width: 768px) {
@@ -587,6 +655,23 @@
                 flex-direction: column;
                 text-align: center;
                 gap: 12px;
+            }
+
+            /* Адаптация поля ввода для мобильных */
+            .message-input-container {
+                padding: 12px 0;
+                gap: 8px;
+            }
+
+            .message-input {
+                min-height: 44px;
+                padding: 12px 14px;
+            }
+
+            .send-button {
+                min-height: 44px;
+                min-width: 70px;
+                padding: 12px 16px;
             }
         }
 
@@ -792,9 +877,18 @@
                             <p class="text-center">Выберите чат для общения</p>
                         </div>
                         
+                        <!-- ИСПРАВЛЕННОЕ ПОЛЕ ВВОДА -->
                         <div class="message-input-container">
-                            <input type="text" id="message-input" placeholder="Введите сообщение..." class="form-input" disabled>
-                            <button onclick="sendMessage()" class="btn-primary" disabled>Отправить</button>
+                            <div class="message-input-wrapper">
+                                <textarea 
+                                    id="message-input" 
+                                    placeholder="Введите сообщение..." 
+                                    class="message-input" 
+                                    disabled
+                                    rows="1"
+                                ></textarea>
+                            </div>
+                            <button onclick="sendMessage()" class="send-button" disabled>➤</button>
                         </div>
                     </div>
                 </div>
@@ -861,8 +955,13 @@
 
         function initEventListeners() {
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-            document.getElementById('message-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') sendMessage();
+            
+            // Обработчик Enter для отправки сообщения
+            document.getElementById('message-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
             });
             
             // Автопоиск при вводе
@@ -871,6 +970,12 @@
                 searchTimeout = setTimeout(() => {
                     searchUsers();
                 }, 500);
+            });
+
+            // Авторазмер текстового поля
+            document.getElementById('message-input').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
             });
         }
 
@@ -1247,8 +1352,12 @@
             const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
             chatAvatar.textContent = firstLetter;
             
-            document.getElementById('message-input').disabled = false;
-            document.querySelector('.message-input-container button').disabled = false;
+            // Включаем поле ввода
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.querySelector('.send-button');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
             
             loadMessages(chatId);
             showSection('chat');
@@ -1320,7 +1429,11 @@
                     lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
+                // Очищаем поле ввода и сбрасываем высоту
                 input.value = '';
+                input.style.height = 'auto';
+                input.focus();
+                
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
                 alert('Ошибка отправки сообщения: ' + error.message);
