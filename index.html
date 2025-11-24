@@ -218,6 +218,193 @@
         .paste-overlay.active {
             display: flex;
         }
+
+        /* СТИЛИ ДЛЯ ЗВОНКОВ */
+        .call-button {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            touch-action: manipulation;
+        }
+
+        .call-button:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .call-button.end-call {
+            background: var(--error-color);
+        }
+
+        .call-button.end-call:hover {
+            background: #c82333;
+        }
+
+        .incoming-call-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            max-width: 300px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .call-animation {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .call-animation .avatar {
+            animation: ring 1.5s infinite;
+        }
+
+        @keyframes ring {
+            0% { transform: scale(1); }
+            10% { transform: scale(1.1); }
+            20% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+
+        .call-animation .ring {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            animation: ripple 1.5s infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .call-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .call-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .call-modal.active {
+            display: flex;
+        }
+
+        .call-content {
+            background: var(--primary-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow);
+        }
+
+        .call-user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .call-status {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 16px 0;
+        }
+
+        .call-timer {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 16px 0;
+        }
+
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .bar {
+            width: 4px;
+            background: var(--accent-color);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .microphone-permission {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .microphone-permission.active {
+            display: flex;
+        }
+
+        .permission-content {
+            background: var(--primary-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow);
+        }
+
+        .permission-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
     </style>
     
     <script>
@@ -1562,6 +1749,9 @@
                                 <div id="chat-avatar" class="avatar">U</div>
                                 <span id="chat-username">Пользователь</span>
                             </div>
+                            <button id="call-button" class="call-button" onclick="startCall()">
+                                📞 Позвонить
+                            </button>
                         </div>
                         
                         <div id="messages-container" class="messages-container">
@@ -1618,6 +1808,53 @@
         </div>
     </div>
 
+    <!-- Уведомление о входящем звонке -->
+    <div id="incoming-call-notification" class="incoming-call-notification" style="display: none;">
+        <div class="call-animation">
+            <div class="avatar" id="caller-avatar">U</div>
+            <div class="ring"></div>
+        </div>
+        <div class="call-info">
+            <h4 id="caller-name">Пользователь</h4>
+            <p>Входящий звонок...</p>
+        </div>
+        <div class="call-controls">
+            <button class="call-button end-call" onclick="rejectCall()">Отклонить</button>
+            <button class="call-button" onclick="acceptCall()">Принять</button>
+        </div>
+    </div>
+
+    <!-- Окно активного звонка -->
+    <div id="call-modal" class="call-modal">
+        <div class="call-content">
+            <div class="call-user-info">
+                <div id="call-modal-avatar" class="avatar-large">U</div>
+                <h3 id="call-modal-username">Пользователь</h3>
+            </div>
+            <div class="call-status" id="call-status">Звонок...</div>
+            <div class="call-timer" id="call-timer">00:00</div>
+            <div class="audio-visualizer" id="audio-visualizer">
+                <!-- Барчики для визуализации аудио будут добавлены динамически -->
+            </div>
+            <div class="call-controls">
+                <button class="call-button end-call" onclick="endCall()">Завершить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Запрос разрешения на использование микрофона -->
+    <div id="microphone-permission" class="microphone-permission">
+        <div class="permission-content">
+            <div class="permission-icon">🎤</div>
+            <h3>Разрешить доступ к микрофону</h3>
+            <p>Для совершения звонков приложению нужен доступ к вашему микрофону.</p>
+            <div class="call-controls" style="margin-top: 20px;">
+                <button class="btn-secondary" onclick="denyMicrophone()">Отклонить</button>
+                <button class="btn-primary" onclick="requestMicrophonePermission()">Разрешить</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === FIREBASE КОНФИГУРАЦИЯ ===
         const firebaseConfig = {
@@ -1646,12 +1883,34 @@
         let searchTimeout = null;
         let editingMessageId = null;
 
+        // Переменные для звонков
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let callListener = null;
+        let currentCall = null;
+        let callTimer = null;
+        let callStartTime = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let callDataChannel = null;
+
+        // Конфигурация WebRTC
+        const servers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
             initAuth();
             initEventListeners();
             initFileUpload();
+            initCallSystem();
         });
 
         function initTheme() {
@@ -1762,6 +2021,13 @@
                     e.target.value = '';
                 }
             });
+        }
+
+        function initCallSystem() {
+            // Слушатель входящих звонков
+            if (currentUser) {
+                listenForIncomingCalls();
+            }
         }
 
         async function handleFileUpload(files) {
@@ -1890,6 +2156,8 @@
         function showMainApp() {
             document.getElementById('auth-section').classList.remove('active');
             document.getElementById('main-section').classList.add('active');
+            // Инициализируем систему звонков после входа
+            initCallSystem();
         }
 
         function showForm(formType) {
@@ -1959,6 +2227,8 @@
         async function logout() {
             if (chatsListener) chatsListener();
             if (messagesListener) messagesListener();
+            if (callListener) callListener();
+            await endCall();
             await auth.signOut();
         }
 
@@ -2497,6 +2767,366 @@
             }
             
             return { nickname: 'Неизвестный', username: 'unknown' };
+        }
+
+        // ========== СИСТЕМА ЗВОНКОВ ==========
+
+        // Запрос разрешения на использование микрофона
+        function requestMicrophonePermission() {
+            document.getElementById('microphone-permission').classList.remove('active');
+            
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(stream => {
+                    localStream = stream;
+                    setupAudioVisualizer(stream);
+                    // После получения доступа к микрофону, можно начать звонок
+                    if (currentCall && currentCall.type === 'outgoing') {
+                        createOffer();
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка доступа к микрофону:', error);
+                    alert('Не удалось получить доступ к микрофону. Звонок невозможен.');
+                    if (currentCall) {
+                        endCall();
+                    }
+                });
+        }
+
+        function denyMicrophone() {
+            document.getElementById('microphone-permission').classList.remove('active');
+            if (currentCall) {
+                endCall();
+            }
+        }
+
+        // Начать звонок
+        async function startCall() {
+            if (!currentChat || !currentChatUser) {
+                alert('Сначала выберите чат!');
+                return;
+            }
+
+            // Проверяем, есть ли уже активный звонок
+            if (currentCall) {
+                alert('Уже есть активный звонок!');
+                return;
+            }
+
+            // Создаем запись о звонке в Firestore
+            const callId = generateCallId();
+            currentCall = {
+                id: callId,
+                callerId: currentUser.uid,
+                receiverId: currentChat.otherUserId,
+                status: 'calling',
+                type: 'outgoing',
+                startTime: new Date()
+            };
+
+            // Сохраняем информацию о звонке
+            await db.collection('calls').doc(callId).set({
+                ...currentCall,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Показываем запрос на использование микрофона
+            document.getElementById('microphone-permission').classList.add('active');
+        }
+
+        // Слушатель входящих звонков
+        function listenForIncomingCalls() {
+            callListener = db.collection('calls')
+                .where('receiverId', '==', currentUser.uid)
+                .where('status', 'in', ['calling', 'ringing'])
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const callData = change.doc.data();
+                            // Проверяем, что это новый входящий звонок
+                            if (callData.status === 'calling' && callData.callerId !== currentUser.uid) {
+                                showIncomingCall(callData, change.doc.id);
+                            }
+                        }
+                    });
+                });
+        }
+
+        // Показать уведомление о входящем звонке
+        async function showIncomingCall(callData, callId) {
+            // Получаем информацию о звонящем
+            const callerData = await getUserData(callData.callerId);
+            
+            // Обновляем уведомление
+            document.getElementById('caller-name').textContent = callerData.nickname;
+            const callerAvatar = document.getElementById('caller-avatar');
+            const firstLetter = callerData.nickname ? callerData.nickname.charAt(0).toUpperCase() : 'U';
+            callerAvatar.textContent = firstLetter;
+            
+            // Показываем уведомление
+            document.getElementById('incoming-call-notification').style.display = 'block';
+            
+            // Сохраняем информацию о текущем звонке
+            currentCall = {
+                id: callId,
+                ...callData,
+                type: 'incoming'
+            };
+
+            // Обновляем статус звонка на "ringing"
+            await db.collection('calls').doc(callId).update({
+                status: 'ringing'
+            });
+
+            // Автоматически отклоняем звонок через 30 секунд, если не ответили
+            setTimeout(() => {
+                if (currentCall && currentCall.id === callId && currentCall.status === 'ringing') {
+                    rejectCall();
+                }
+            }, 30000);
+        }
+
+        // Принять входящий звонок
+        async function acceptCall() {
+            if (!currentCall) return;
+
+            // Скрываем уведомление
+            document.getElementById('incoming-call-notification').style.display = 'none';
+
+            // Обновляем статус звонка
+            await db.collection('calls').doc(currentCall.id).update({
+                status: 'accepted',
+                acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Показываем запрос на использование микрофона
+            document.getElementById('microphone-permission').classList.add('active');
+        }
+
+        // Отклонить входящий звонок
+        async function rejectCall() {
+            if (!currentCall) return;
+
+            // Скрываем уведомление
+            document.getElementById('incoming-call-notification').style.display = 'none';
+
+            // Обновляем статус звонка
+            await db.collection('calls').doc(currentCall.id).update({
+                status: 'rejected',
+                endedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            currentCall = null;
+        }
+
+        // Создание WebRTC предложения
+        async function createOffer() {
+            if (!currentCall) return;
+
+            try {
+                // Создаем PeerConnection
+                peerConnection = new RTCPeerConnection(servers);
+
+                // Добавляем локальный поток
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+
+                // Создаем канал данных для обмена информацией
+                callDataChannel = peerConnection.createDataChannel('call');
+                callDataChannel.onopen = () => console.log('Data channel opened');
+                callDataChannel.onmessage = handleDataChannelMessage;
+
+                // Обработчик получения удаленного потока
+                peerConnection.ontrack = event => {
+                    remoteStream = event.streams[0];
+                    // Здесь можно воспроизвести удаленный аудиопоток
+                    const remoteAudio = new Audio();
+                    remoteAudio.srcObject = remoteStream;
+                    remoteAudio.play();
+                };
+
+                // Создаем предложение
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Сохраняем предложение в Firestore
+                await db.collection('calls').doc(currentCall.id).update({
+                    offer: offer,
+                    status: 'offer_created'
+                });
+
+                // Слушаем ответ
+                listenForAnswer();
+
+                // Показываем окно звонка
+                showCallModal();
+
+            } catch (error) {
+                console.error('Ошибка создания предложения:', error);
+                alert('Ошибка установки соединения: ' + error.message);
+                endCall();
+            }
+        }
+
+        // Слушатель ответа на звонок
+        function listenForAnswer() {
+            const answerListener = db.collection('calls').doc(currentCall.id)
+                .onSnapshot(doc => {
+                    const callData = doc.data();
+                    if (callData.answer && peerConnection.signalingState === 'have-local-offer') {
+                        handleAnswer(callData.answer);
+                        answerListener(); // Отписываемся после получения ответа
+                    }
+                    if (callData.iceCandidates) {
+                        callData.iceCandidates.forEach(candidate => {
+                            peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                        });
+                    }
+                });
+        }
+
+        // Обработка ответа на звонок
+        async function handleAnswer(answer) {
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            } catch (error) {
+                console.error('Ошибка установки удаленного описания:', error);
+                endCall();
+            }
+        }
+
+        // Показать окно активного звонка
+        function showCallModal() {
+            const callModal = document.getElementById('call-modal');
+            const callModalAvatar = document.getElementById('call-modal-avatar');
+            const callModalUsername = document.getElementById('call-modal-username');
+            
+            // Обновляем информацию о собеседнике
+            const user = currentCall.type === 'outgoing' ? currentChatUser : 
+                        currentCall.callerId === currentUser.uid ? currentChatUser : 
+                        { nickname: 'Пользователь', username: 'user' };
+            
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            callModalAvatar.textContent = firstLetter;
+            callModalUsername.textContent = user.nickname;
+            
+            // Показываем модальное окно
+            callModal.classList.add('active');
+            
+            // Запускаем таймер звонка
+            startCallTimer();
+        }
+
+        // Запуск таймера звонка
+        function startCallTimer() {
+            callStartTime = new Date();
+            callTimer = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - callStartTime) / 1000);
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+                document.getElementById('call-timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // Завершение звонка
+        async function endCall() {
+            // Останавливаем таймер
+            if (callTimer) {
+                clearInterval(callTimer);
+                callTimer = null;
+            }
+
+            // Закрываем PeerConnection
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            // Останавливаем локальный поток
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            // Скрываем модальные окна
+            document.getElementById('call-modal').classList.remove('active');
+            document.getElementById('incoming-call-notification').style.display = 'none';
+            document.getElementById('microphone-permission').classList.remove('active');
+
+            // Обновляем статус звонка в Firestore
+            if (currentCall) {
+                await db.collection('calls').doc(currentCall.id).update({
+                    status: 'ended',
+                    endedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    duration: callStartTime ? Math.floor((new Date() - callStartTime) / 1000) : 0
+                });
+            }
+
+            currentCall = null;
+        }
+
+        // Настройка визуализатора аудио
+        function setupAudioVisualizer(stream) {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            if (!analyser) {
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+            }
+            
+            if (microphone) {
+                microphone.disconnect();
+            }
+            
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            
+            // Создаем барчики для визуализации
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            const visualizer = document.getElementById('audio-visualizer');
+            visualizer.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                visualizer.appendChild(bar);
+            }
+            
+            // Функция обновления визуализации
+            function updateVisualizer() {
+                if (!analyser) return;
+                
+                analyser.getByteFrequencyData(dataArray);
+                const bars = visualizer.getElementsByClassName('bar');
+                
+                for (let i = 0; i < bars.length; i++) {
+                    const value = dataArray[i * 2] || 0;
+                    const height = Math.max(2, value / 2);
+                    bars[i].style.height = height + 'px';
+                }
+                
+                requestAnimationFrame(updateVisualizer);
+            }
+            
+            updateVisualizer();
+        }
+
+        // Обработчик сообщений через DataChannel
+        function handleDataChannelMessage(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение через DataChannel:', data);
+        }
+
+        // Генерация ID для звонка
+        function generateCallId() {
+            return 'call_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
     </script>
