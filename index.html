@@ -85,6 +85,139 @@
         .messages-container::-webkit-scrollbar-thumb:hover {
             background: var(--accent-color);
         }
+
+        /* СТИЛИ ДЛЯ ФАЙЛОВ */
+        .file-message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            max-width: 300px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .message.sent .file-message {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .file-message:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .file-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .file-upload-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .upload-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: var(--transition);
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .upload-button:hover {
+            background: var(--secondary-bg);
+            color: var(--accent-color);
+        }
+
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .image-preview:hover {
+            transform: scale(1.05);
+        }
+
+        .message-input-wrapper {
+            position: relative;
+        }
+
+        .paste-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius);
+            z-index: 10;
+            color: white;
+            font-weight: bold;
+        }
+
+        .paste-overlay.active {
+            display: flex;
+        }
     </style>
     
     <script>
@@ -196,9 +329,15 @@
                 return false;
             });
             
+            // РАЗРЕШИТЬ ВСТАВКУ ДЛЯ ПОЛЯ ВВОДА СООБЩЕНИЙ
             document.addEventListener('paste', function(e) {
+                const messageInput = document.getElementById('message-input');
+                if (e.target === messageInput) {
+                    // Разрешить вставку в поле ввода сообщений
+                    return true;
+                }
                 e.preventDefault();
-                alert('Вставка содержимого запрещена!');
+                alert('Вставка содержимого разрешена только в поле ввода сообщений!');
                 return false;
             });
             
@@ -940,6 +1079,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .message-input {
@@ -1430,13 +1570,18 @@
                         
                         <div class="message-input-container">
                             <div class="message-input-wrapper">
+                                <div class="paste-overlay" id="paste-overlay">Отпустите для вставки</div>
                                 <textarea 
                                     id="message-input" 
-                                    placeholder="Введите сообщение..." 
+                                    placeholder="Введите сообщение или перетащите файл..." 
                                     class="message-input" 
                                     disabled
                                     rows="1"
                                 ></textarea>
+                            </div>
+                            <div class="file-upload-container">
+                                <input type="file" id="file-input" class="file-input" multiple>
+                                <label for="file-input" class="upload-button" title="Прикрепить файл">📎</label>
                             </div>
                             <button onclick="sendMessage()" class="send-button" disabled>➤</button>
                         </div>
@@ -1506,6 +1651,7 @@
             initTheme();
             initAuth();
             initEventListeners();
+            initFileUpload();
         });
 
         function initTheme() {
@@ -1563,6 +1709,168 @@
                     closeUserProfile();
                 }
             });
+
+            // Обработчики для drag & drop
+            const messageInput = document.getElementById('message-input');
+            const pasteOverlay = document.getElementById('paste-overlay');
+
+            messageInput.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                pasteOverlay.classList.add('active');
+            });
+
+            messageInput.addEventListener('dragleave', function(e) {
+                if (!messageInput.contains(e.relatedTarget)) {
+                    pasteOverlay.classList.remove('active');
+                }
+            });
+
+            messageInput.addEventListener('drop', function(e) {
+                e.preventDefault();
+                pasteOverlay.classList.remove('active');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files);
+                }
+            });
+
+            // Обработчик вставки изображений
+            messageInput.addEventListener('paste', function(e) {
+                const items = e.clipboardData?.items;
+                if (items) {
+                    for (let item of items) {
+                        if (item.type.indexOf('image') !== -1) {
+                            const file = item.getAsFile();
+                            if (file) {
+                                e.preventDefault();
+                                handleFileUpload([file]);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files);
+                    // Сбрасываем значение input чтобы можно было загрузить тот же файл снова
+                    e.target.value = '';
+                }
+            });
+        }
+
+        async function handleFileUpload(files) {
+            if (!currentChat) {
+                alert('Сначала выберите чат!');
+                return;
+            }
+
+            for (let file of files) {
+                await uploadFile(file);
+            }
+        }
+
+        async function uploadFile(file) {
+            if (!currentChat) return;
+
+            try {
+                // Создаем временное сообщение о загрузке
+                const tempMessageId = 'temp_' + Date.now();
+                const messagesContainer = document.getElementById('messages-container');
+                
+                const tempMessageDiv = document.createElement('div');
+                tempMessageDiv.className = 'message sent';
+                tempMessageDiv.id = tempMessageId;
+                tempMessageDiv.innerHTML = `
+                    <div class="file-message">
+                        <div class="file-icon">📎</div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                            <div class="upload-progress">
+                                <div class="upload-progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-time">Загрузка...</div>
+                `;
+                messagesContainer.appendChild(tempMessageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Генерируем уникальное имя файла
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+                const filePath = `chats/${currentChat.id}/${fileName}`;
+                
+                // Загружаем файл в Firebase Storage
+                const storageRef = storage.ref(filePath);
+                const uploadTask = storageRef.put(file);
+
+                // Следим за прогрессом загрузки
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        const progressBar = document.querySelector(`#${tempMessageId} .upload-progress-bar`);
+                        if (progressBar) {
+                            progressBar.style.width = progress + '%';
+                        }
+                    },
+                    (error) => {
+                        console.error('Ошибка загрузки файла:', error);
+                        document.getElementById(tempMessageId).innerHTML = `
+                            <div class="error-message">Ошибка загрузки: ${file.name}</div>
+                        `;
+                        setTimeout(() => {
+                            const element = document.getElementById(tempMessageId);
+                            if (element) element.remove();
+                        }, 3000);
+                    },
+                    async () => {
+                        // Загрузка завершена
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        
+                        // Сохраняем информацию о файле в Firestore
+                        await db.collection('chats').doc(currentChat.id).collection('messages').add({
+                            type: 'file',
+                            fileName: file.name,
+                            fileURL: downloadURL,
+                            fileSize: file.size,
+                            fileType: file.type,
+                            senderId: currentUser.uid,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        // Обновляем последнее сообщение в чате
+                        await db.collection('chats').doc(currentChat.id).update({
+                            lastMessage: `Файл: ${file.name}`,
+                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        // Удаляем временное сообщение
+                        const tempElement = document.getElementById(tempMessageId);
+                        if (tempElement) {
+                            tempElement.remove();
+                        }
+                    }
+                );
+
+            } catch (error) {
+                console.error('Ошибка загрузки файла:', error);
+                alert('Ошибка загрузки файла: ' + error.message);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         function toggleTheme() {
@@ -1972,7 +2280,25 @@
                     </div>
                     <div class="message-time">${time}</div>
                 `;
+            } else if (message.type === 'file') {
+                // Сообщение с файлом
+                div.innerHTML = `
+                    <div class="file-message" onclick="openFile('${message.fileURL}', '${message.fileName}')">
+                        <div class="file-icon">${getFileIcon(message.fileType)}</div>
+                        <div class="file-info">
+                            <div class="file-name">${message.fileName}</div>
+                            <div class="file-size">${formatFileSize(message.fileSize)}</div>
+                        </div>
+                    </div>
+                    <div class="message-actions">
+                        ${isSent ? `
+                            <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
+                        ` : ''}
+                    </div>
+                    <div class="message-time">${time}</div>
+                `;
             } else {
+                // Текстовое сообщение
                 div.innerHTML = `
                     <div class="message-text">${message.text}</div>
                     <div class="message-actions">
@@ -1986,6 +2312,21 @@
             }
             
             return div;
+        }
+
+        function getFileIcon(fileType) {
+            if (fileType.startsWith('image/')) return '🖼️';
+            if (fileType.startsWith('video/')) return '🎬';
+            if (fileType.startsWith('audio/')) return '🎵';
+            if (fileType.includes('pdf')) return '📕';
+            if (fileType.includes('word') || fileType.includes('document')) return '📄';
+            if (fileType.includes('sheet') || fileType.includes('excel')) return '📊';
+            if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar')) return '📦';
+            return '📎';
+        }
+
+        function openFile(url, fileName) {
+            window.open(url, '_blank');
         }
 
         // УДАЛЕНИЕ СООБЩЕНИЯ
@@ -2013,7 +2354,7 @@
                     // Обновляем последнее сообщение
                     const lastMessage = messagesQuery.docs[0].data();
                     await db.collection('chats').doc(currentChat.id).update({
-                        lastMessage: lastMessage.text.length > 50 ? lastMessage.text.substring(0, 50) + '...' : lastMessage.text,
+                        lastMessage: lastMessage.text ? (lastMessage.text.length > 50 ? lastMessage.text.substring(0, 50) + '...' : lastMessage.text) : `Файл: ${lastMessage.fileName}`,
                         lastMessageTime: lastMessage.timestamp
                     });
                 }
