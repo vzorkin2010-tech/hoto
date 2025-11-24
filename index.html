@@ -439,9 +439,11 @@
             margin-bottom: 20px;
         }
 
+        /* БЕЛАЯ КНОПКА НАЗАД */
         .btn-back {
-            background: none;
-            border: none;
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
             font-size: 18px;
             cursor: pointer;
             padding: 10px;
@@ -452,10 +454,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: bold;
         }
 
         .btn-back:hover {
             background: var(--secondary-bg);
+            border-color: var(--accent-color);
         }
 
         .chat-user-info {
@@ -816,7 +820,7 @@
                             <h3>Мои чаты</h3>
                         </div>
                         <div id="chats-list" class="chats-list">
-                            <p class="text-center">Загрузка чатов...</p>
+                            <p class="text-center">Загрузка пользователей...</p>
                         </div>
                     </div>
 
@@ -946,7 +950,7 @@
                     currentUser = user;
                     await loadUserProfile(user.uid);
                     showMainApp();
-                    loadChats();
+                    loadAllUsers(); // Загружаем всех пользователей
                 } else {
                     showAuth();
                 }
@@ -1141,6 +1145,31 @@
             }
         }
 
+        // ПРОСТАЯ СИСТЕМА - ВСЕ ПОЛЬЗОВАТЕЛИ В МОИХ ЧАТАХ
+        async function loadAllUsers() {
+            try {
+                const usersQuery = await db.collection('users').get();
+                const chatsContainer = document.getElementById('chats-list');
+                chatsContainer.innerHTML = '';
+
+                if (usersQuery.empty) {
+                    chatsContainer.innerHTML = '<p class="text-center">Нет пользователей</p>';
+                    return;
+                }
+
+                usersQuery.forEach(doc => {
+                    const user = doc.data();
+                    if (doc.id !== currentUser.uid) {
+                        const userElement = createUserElement(user, doc.id);
+                        chatsContainer.appendChild(userElement);
+                    }
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки пользователей:', error);
+                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
+            }
+        }
+
         async function searchUsers() {
             const query = document.getElementById('search-input').value.trim();
             const resultsContainer = document.getElementById('search-results');
@@ -1271,79 +1300,6 @@
             }
         }
 
-        function loadChats() {
-            if (chatsListener) chatsListener();
-
-            // Реальная подписка на обновления чатов
-            chatsListener = db.collection('chats')
-                .where('participants', 'array-contains', currentUser.uid)
-                .orderBy('lastMessageTime', 'desc')
-                .onSnapshot(async (snapshot) => {
-                    const chatsContainer = document.getElementById('chats-list');
-                    chatsContainer.innerHTML = '';
-
-                    if (snapshot.empty) {
-                        chatsContainer.innerHTML = '<p class="text-center">У вас пока нет чатов</p>';
-                        return;
-                    }
-
-                    for (let doc of snapshot.docs) {
-                        const chat = doc.data();
-                        const otherUserId = chat.participants.find(id => id !== currentUser.uid);
-                        
-                        if (otherUserId) {
-                            const user = await getUserData(otherUserId);
-                            const chatElement = createChatElement(chat, doc.id, user);
-                            chatsContainer.appendChild(chatElement);
-                        }
-                    }
-                }, (error) => {
-                    console.error('Ошибка загрузки чатов:', error);
-                });
-        }
-
-        async function getUserData(userId) {
-            if (usersCache.has(userId)) {
-                return usersCache.get(userId);
-            }
-
-            try {
-                const doc = await db.collection('users').doc(userId).get();
-                if (doc.exists) {
-                    const userData = doc.data();
-                    usersCache.set(userId, userData);
-                    return userData;
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки пользователя:', error);
-            }
-            
-            return { nickname: 'Неизвестный', username: 'unknown' };
-        }
-
-        function createChatElement(chat, chatId, user) {
-            const div = document.createElement('div');
-            div.className = 'chat-item';
-            div.onclick = () => openChat(chatId, chat.participants.find(id => id !== currentUser.uid));
-            
-            const lastMessageTime = chat.lastMessageTime ? 
-                formatTime(chat.lastMessageTime.toDate()) : '';
-            
-            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
-            
-            div.innerHTML = `
-                <div class="avatar">${firstLetter}</div>
-                <div class="chat-info">
-                    <strong>${user.nickname}</strong>
-                    <p>@${user.username}</p>
-                    ${chat.lastMessage ? `<small>${chat.lastMessage}</small>` : '<small>Чат создан</small>'}
-                </div>
-                ${lastMessageTime ? `<span class="message-time">${lastMessageTime}</span>` : ''}
-            `;
-            
-            return div;
-        }
-
         async function openChat(chatId, otherUserId) {
             currentChat = { id: chatId, otherUserId: otherUserId };
             
@@ -1471,19 +1427,24 @@
             }
         }
 
-        // Функция для принудительного обновления чатов
-        function refreshChats() {
-            if (currentUser) {
-                loadChats();
+        async function getUserData(userId) {
+            if (usersCache.has(userId)) {
+                return usersCache.get(userId);
             }
-        }
 
-        // Автоматическое обновление каждые 5 секунд
-        setInterval(() => {
-            if (currentUser) {
-                refreshChats();
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    const userData = doc.data();
+                    usersCache.set(userId, userData);
+                    return userData;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
             }
-        }, 5000);
+            
+            return { nickname: 'Неизвестный', username: 'unknown' };
+        }
 
     </script>
 </body>
