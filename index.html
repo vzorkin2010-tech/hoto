@@ -41,6 +41,50 @@
             -o-user-drag: none;
             user-drag: none;
         }
+
+        /* КРАСИВЫЙ КАСТОМНЫЙ СКРОЛЛБАР */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        /* Для Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        /* Для контейнеров с сообщениями - более тонкий скролл */
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
     </style>
     
     <script>
@@ -229,6 +273,13 @@
             color: var(--text-primary);
             line-height: 1.6;
             transition: var(--transition);
+            /* Скрыть стандартный скроллбар */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
         }
 
         .section {
@@ -441,6 +492,23 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            /* Кастомный скролл для сайдбара */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         .user-profile {
@@ -518,6 +586,22 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            /* Кастомный скролл для контента */
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         .content-section {
@@ -550,6 +634,29 @@
             flex-direction: column;
             gap: 12px;
             flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .chats-list::-webkit-scrollbar,
+        .users-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chats-list::-webkit-scrollbar-thumb,
+        .users-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
+        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chats-list::-webkit-scrollbar-thumb:hover,
+        .users-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         .chat-item, 
@@ -663,6 +770,36 @@
             gap: 12px;
             -webkit-overflow-scrolling: touch;
             min-height: 0;
+            /* Кастомный скролл для сообщений */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+
+        [data-theme="dark"] .messages-container {
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 3px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         .message {
@@ -897,6 +1034,24 @@
             max-width: 400px;
             width: 100%;
             animation: modalSlideIn 0.3s ease-out;
+            /* Кастомный скролл для модальных окон */
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         @keyframes modalSlideIn {
@@ -1133,6 +1288,7 @@
     </style>
 </head>
 <body>
+    <!-- Остальной HTML код остается без изменений -->
     <div id="app">
         <!-- Секция аутентификации -->
         <div id="auth-section" class="section active">
