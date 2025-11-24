@@ -1770,8 +1770,13 @@
                 return;
             }
 
-            for (let file of files) {
-                await uploadFile(file);
+            try {
+                // Обрабатываем файлы последовательно
+                for (let file of files) {
+                    await uploadFile(file);
+                }
+            } catch (error) {
+                console.error('Ошибка обработки файлов:', error);
             }
         }
 
@@ -1811,57 +1816,68 @@
                 const storageRef = storage.ref(filePath);
                 const uploadTask = storageRef.put(file);
 
-                // Следим за прогрессом загрузки
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        const progressBar = document.querySelector(`#${tempMessageId} .upload-progress-bar`);
-                        if (progressBar) {
-                            progressBar.style.width = progress + '%';
-                        }
-                    },
-                    (error) => {
-                        console.error('Ошибка загрузки файла:', error);
-                        document.getElementById(tempMessageId).innerHTML = `
-                            <div class="error-message">Ошибка загрузки: ${file.name}</div>
-                        `;
-                        setTimeout(() => {
-                            const element = document.getElementById(tempMessageId);
-                            if (element) element.remove();
-                        }, 3000);
-                    },
-                    async () => {
-                        // Загрузка завершена
-                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                        
-                        // Сохраняем информацию о файле в Firestore
-                        await db.collection('chats').doc(currentChat.id).collection('messages').add({
-                            type: 'file',
-                            fileName: file.name,
-                            fileURL: downloadURL,
-                            fileSize: file.size,
-                            fileType: file.type,
-                            senderId: currentUser.uid,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                // Возвращаем промис для отслеживания завершения загрузки
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            const progressBar = document.querySelector(`#${tempMessageId} .upload-progress-bar`);
+                            if (progressBar) {
+                                progressBar.style.width = progress + '%';
+                            }
+                        },
+                        (error) => {
+                            console.error('Ошибка загрузки файла:', error);
+                            document.getElementById(tempMessageId).innerHTML = `
+                                <div class="error-message">Ошибка загрузки: ${file.name}</div>
+                            `;
+                            setTimeout(() => {
+                                const element = document.getElementById(tempMessageId);
+                                if (element) element.remove();
+                            }, 3000);
+                            reject(error);
+                        },
+                        async () => {
+                            try {
+                                // Загрузка завершена
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                
+                                // Сохраняем информацию о файле в Firestore
+                                await db.collection('chats').doc(currentChat.id).collection('messages').add({
+                                    type: 'file',
+                                    fileName: file.name,
+                                    fileURL: downloadURL,
+                                    fileSize: file.size,
+                                    fileType: file.type,
+                                    senderId: currentUser.uid,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                });
 
-                        // Обновляем последнее сообщение в чате
-                        await db.collection('chats').doc(currentChat.id).update({
-                            lastMessage: `Файл: ${file.name}`,
-                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                                // Обновляем последнее сообщение в чате
+                                await db.collection('chats').doc(currentChat.id).update({
+                                    lastMessage: `Файл: ${file.name}`,
+                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                                });
 
-                        // Удаляем временное сообщение
-                        const tempElement = document.getElementById(tempMessageId);
-                        if (tempElement) {
-                            tempElement.remove();
+                                // Удаляем временное сообщение
+                                const tempElement = document.getElementById(tempMessageId);
+                                if (tempElement) {
+                                    tempElement.remove();
+                                }
+                                
+                                resolve();
+                            } catch (error) {
+                                console.error('Ошибка сохранения информации о файле:', error);
+                                reject(error);
+                            }
                         }
-                    }
-                );
+                    );
+                });
 
             } catch (error) {
                 console.error('Ошибка загрузки файла:', error);
                 alert('Ошибка загрузки файла: ' + error.message);
+                throw error;
             }
         }
 
@@ -2300,7 +2316,7 @@
             } else {
                 // Текстовое сообщение
                 div.innerHTML = `
-                    <div class="message-text">${message.text}</div>
+                    <div class="message-text">${message.text || ''}</div>
                     <div class="message-actions">
                         ${isSent ? `
                             <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
