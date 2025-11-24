@@ -278,7 +278,13 @@
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-color);
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
             border: 2px solid var(--accent-color);
         }
 
@@ -286,7 +292,13 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-color);
+            color: white;
+            font-weight: bold;
+            font-size: 36px;
             border: 3px solid var(--accent-color);
         }
 
@@ -512,58 +524,6 @@
             min-height: 44px;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease-out;
-            padding: var(--mobile-padding);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--primary-bg);
-            padding: 24px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            max-width: 400px;
-            width: 100%;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
         @media (max-width: 768px) {
             .main-container {
                 flex-direction: column;
@@ -623,19 +583,10 @@
                 flex-direction: column;
             }
 
-            .modal-actions {
-                flex-direction: column;
-            }
-
             .user-item {
                 flex-direction: column;
                 text-align: center;
                 gap: 12px;
-            }
-
-            .user-item button {
-                width: 100%;
-                margin-left: 0 !important;
             }
         }
 
@@ -755,7 +706,7 @@
                 <!-- Сайдбар -->
                 <div class="sidebar">
                     <div class="user-profile">
-                        <img id="user-avatar" src="https://via.placeholder.com/40?text=USER" alt="Аватар" class="avatar">
+                        <div id="user-avatar" class="avatar">U</div>
                         <span id="user-nickname">Пользователь</span>
                     </div>
                     
@@ -804,11 +755,7 @@
                         </div>
                         <div class="profile-form">
                             <div class="avatar-upload">
-                                <img id="profile-avatar" src="https://via.placeholder.com/100?text=USER" alt="Аватар" class="avatar-large">
-                                <input type="file" id="avatar-input" accept="image/*" style="display: none;">
-                                <button onclick="document.getElementById('avatar-input').click()" class="btn-secondary">
-                                    Сменить аватар
-                                </button>
+                                <div id="profile-avatar" class="avatar-large">U</div>
                             </div>
                             
                             <div class="form-group">
@@ -836,7 +783,7 @@
                         <div class="chat-header">
                             <button onclick="showSection('chats')" class="btn-back">← Назад</button>
                             <div class="chat-user-info">
-                                <img id="chat-avatar" src="https://via.placeholder.com/40?text=USER" alt="Аватар" class="avatar">
+                                <div id="chat-avatar" class="avatar">U</div>
                                 <span id="chat-username">Пользователь</span>
                             </div>
                         </div>
@@ -917,7 +864,6 @@
             document.getElementById('message-input').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') sendMessage();
             });
-            document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
             
             // Автопоиск при вводе
             document.getElementById('search-input').addEventListener('input', function(e) {
@@ -982,7 +928,6 @@
                     nickname: email.split('@')[0],
                     username: generateUsername(email),
                     bio: '',
-                    avatarUrl: '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
@@ -1033,44 +978,18 @@
         function updateProfileUI() {
             if (!currentUserData) return;
 
-            const avatars = document.querySelectorAll('#user-avatar, #profile-avatar');
-            avatars.forEach(avatar => {
-                if (currentUserData.avatarUrl) {
-                    avatar.src = currentUserData.avatarUrl;
-                }
-            });
+            // Обновляем аватары с первой буквой никнейма
+            const userAvatar = document.getElementById('user-avatar');
+            const profileAvatar = document.getElementById('profile-avatar');
+            const firstLetter = currentUserData.nickname ? currentUserData.nickname.charAt(0).toUpperCase() : 'U';
+            
+            userAvatar.textContent = firstLetter;
+            profileAvatar.textContent = firstLetter;
 
             document.getElementById('user-nickname').textContent = currentUserData.nickname;
             document.getElementById('profile-nickname').value = currentUserData.nickname;
             document.getElementById('profile-username').value = currentUserData.username;
             document.getElementById('profile-bio').value = currentUserData.bio || '';
-        }
-
-        async function handleAvatarUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-                alert('Пожалуйста, выберите изображение');
-                return;
-            }
-
-            try {
-                const storageRef = storage.ref();
-                const avatarRef = storageRef.child(`avatars/${currentUser.uid}/${Date.now()}_${file.name}`);
-                const snapshot = await avatarRef.put(file);
-                const downloadURL = await snapshot.ref.getDownloadURL();
-
-                await db.collection('users').doc(currentUser.uid).update({
-                    avatarUrl: downloadURL
-                });
-
-                currentUserData.avatarUrl = downloadURL;
-                updateProfileUI();
-                alert('Аватар успешно обновлен!');
-            } catch (error) {
-                alert('Ошибка загрузки аватара: ' + error.message);
-            }
         }
 
         async function updateProfile() {
@@ -1164,9 +1083,10 @@
             const div = document.createElement('div');
             div.className = 'user-item';
             div.onclick = () => startChatWithUser(userId);
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            
             div.innerHTML = `
-                <img src="${user.avatarUrl || 'https://via.placeholder.com/50?text=USER'}" 
-                     alt="Аватар" class="avatar">
+                <div class="avatar">${firstLetter}</div>
                 <div class="user-info">
                     <strong>${user.nickname}</strong>
                     <p>@${user.username}</p>
@@ -1209,20 +1129,17 @@
         async function updateChatParticipantsInfo(chatId, participantIds) {
             try {
                 const participantsData = {};
-                const avatarsData = {};
                 
                 for (const uid of participantIds) {
                     const userDoc = await db.collection('users').doc(uid).get();
                     if (userDoc.exists) {
                         const userData = userDoc.data();
                         participantsData[uid] = userData.nickname || userData.username;
-                        avatarsData[uid] = userData.avatarUrl || '';
                     }
                 }
                 
                 await db.collection('chats').doc(chatId).update({
-                    participantNames: participantsData,
-                    participantAvatars: avatarsData
+                    participantNames: participantsData
                 });
                 
             } catch (error) {
@@ -1238,7 +1155,7 @@
 
                 for (let doc of chatQuery.docs) {
                     const chat = doc.data();
-                    if (chat.participants.includes(userId)) {
+                    if (chat.participants && chat.participants.includes(userId)) {
                         return doc.id;
                     }
                 }
@@ -1295,7 +1212,7 @@
                 console.error('Ошибка загрузки пользователя:', error);
             }
             
-            return { nickname: 'Неизвестный', username: 'unknown', avatarUrl: '' };
+            return { nickname: 'Неизвестный', username: 'unknown' };
         }
 
         function createChatElement(chat, chatId, user) {
@@ -1306,9 +1223,10 @@
             const lastMessageTime = chat.lastMessageTime ? 
                 formatTime(chat.lastMessageTime.toDate()) : '';
             
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            
             div.innerHTML = `
-                <img src="${user.avatarUrl || 'https://via.placeholder.com/50?text=USER'}" 
-                     alt="Аватар" class="avatar">
+                <div class="avatar">${firstLetter}</div>
                 <div class="chat-info">
                     <strong>${user.nickname}</strong>
                     <p>@${user.username}</p>
@@ -1326,7 +1244,8 @@
             const user = await getUserData(otherUserId);
             document.getElementById('chat-username').textContent = user.nickname;
             const chatAvatar = document.getElementById('chat-avatar');
-            chatAvatar.src = user.avatarUrl || 'https://via.placeholder.com/40?text=USER';
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            chatAvatar.textContent = firstLetter;
             
             document.getElementById('message-input').disabled = false;
             document.querySelector('.message-input-container button').disabled = false;
