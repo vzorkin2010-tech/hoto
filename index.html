@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <style>
-        /* === ОБНОВЛЕННЫЕ CSS СТИЛИ ДЛЯ ТЕЛЕФОНОВ === */
+        /* === CSS СТИЛИ === */
         :root {
             --primary-bg: #ffffff;
             --secondary-bg: #f8f9fa;
@@ -23,6 +23,7 @@
             --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             --border-radius: 12px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --mobile-padding: 16px;
         }
 
         [data-theme="dark"] {
@@ -40,28 +41,27 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--primary-bg);
             color: var(--text-primary);
             line-height: 1.6;
             transition: var(--transition);
-            overflow-x: hidden;
         }
 
-        /* Улучшения для мобильных */
         .section {
             display: none;
             height: 100vh;
-            width: 100vw;
         }
 
         .section.active {
             display: block;
         }
 
+        /* === ОПТИМИЗИРОВАННЫЕ КНОПКИ ДЛЯ МОБИЛЬНЫХ === */
         .btn-primary {
             background: var(--accent-color);
             color: white;
@@ -72,22 +72,62 @@
             font-size: 16px;
             font-weight: 600;
             transition: var(--transition);
+            transform: translateY(0);
             min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-primary:hover:not(:disabled) {
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn-primary:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        .btn-primary:hover:not(:disabled),
+        .btn-primary:focus:not(:disabled) {
             background: var(--accent-hover);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: var(--shadow);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         .btn-primary:disabled {
             background: var(--text-secondary);
             cursor: not-allowed;
             transform: none;
+            opacity: 0.7;
         }
 
         .btn-secondary {
@@ -97,37 +137,54 @@
             padding: 12px 18px;
             border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             transition: var(--transition);
             min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover,
+        .btn-secondary:focus {
             border-color: var(--accent-color);
             transform: translateY(-1px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
         }
 
         .icon-btn {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
-            padding: 12px;
+            padding: 10px;
             border-radius: 50%;
             transition: var(--transition);
-            min-width: 48px;
-            min-height: 48px;
+            min-width: 44px;
+            min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .icon-btn:hover,
+        .icon-btn:focus {
+            background: var(--secondary-bg);
+            transform: scale(1.05);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
         }
 
         .form-input {
             width: 100%;
-            padding: 16px;
+            padding: 14px 16px;
             border: 2px solid var(--border-color);
             border-radius: var(--border-radius);
             background: var(--primary-bg);
@@ -135,6 +192,7 @@
             font-size: 16px;
             transition: var(--transition);
             min-height: 48px;
+            -webkit-appearance: none;
         }
 
         .form-input:focus {
@@ -144,11 +202,16 @@
             box-shadow: var(--shadow);
         }
 
-        /* Аутентификация - улучшенная для телефонов */
+        .form-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Мобильная оптимизация форм */
         .auth-container {
-            max-width: 100%;
+            max-width: 400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 20px var(--mobile-padding);
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -168,6 +231,10 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .auth-forms {
+            position: relative;
+        }
+
         .auth-form {
             display: none;
             animation: slideIn 0.5s ease-out;
@@ -175,6 +242,17 @@
 
         .auth-form.active {
             display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .auth-form h2 {
@@ -187,12 +265,28 @@
             margin-bottom: 16px;
         }
 
-        /* Хедер - улучшенный для телефонов */
+        .auth-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 15px;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Оптимизированный хедер для мобильных */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 12px var(--mobile-padding);
             border-bottom: 1px solid var(--border-color);
             background: var(--primary-bg);
             position: sticky;
@@ -212,49 +306,41 @@
             align-items: center;
         }
 
-        /* Основной контейнер - адаптивный */
         .main-container {
             display: flex;
             height: calc(100vh - 60px);
-            flex-direction: column;
         }
 
-        /* Сайдбар - горизонтальный на телефонах */
         .sidebar {
-            width: 100%;
+            width: 280px;
             background: var(--secondary-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
             display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 16px;
-            overflow-x: auto;
-            min-height: 80px;
+            flex-direction: column;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 8px 12px;
+            margin-bottom: 24px;
+            padding: 12px;
             border-radius: var(--border-radius);
             background: var(--primary-bg);
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .avatar {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-color);
         }
 
         .avatar-large {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid var(--accent-color);
@@ -262,39 +348,37 @@
 
         .sidebar-nav {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             gap: 8px;
-            overflow-x: auto;
-            flex: 1;
         }
 
         .nav-btn {
             background: transparent;
             border: none;
-            padding: 12px 16px;
+            padding: 16px;
+            text-align: left;
             border-radius: var(--border-radius);
             color: var(--text-primary);
             cursor: pointer;
             transition: var(--transition);
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            white-space: nowrap;
-            flex-shrink: 0;
-            min-height: 44px;
+            min-height: 52px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            touch-action: manipulation;
         }
 
-        .nav-btn:hover, .nav-btn.active {
+        .nav-btn:hover, 
+        .nav-btn.active {
             background: var(--accent-color);
             color: white;
+            transform: translateX(8px);
         }
 
-        /* Контент - улучшенный */
         .content {
             flex: 1;
-            padding: 16px;
+            padding: var(--mobile-padding);
             background: var(--primary-bg);
             overflow-y: auto;
         }
@@ -322,48 +406,46 @@
             font-weight: 600;
         }
 
-        /* Списки - улучшенные */
-        .chats-list, .users-list {
+        .chats-list, 
+        .users-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
-        .chat-item, .user-item {
+        .chat-item, 
+        .user-item {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             padding: 16px;
             background: var(--secondary-bg);
             border-radius: var(--border-radius);
             cursor: pointer;
             transition: var(--transition);
             border: 2px solid transparent;
+            min-height: 72px;
         }
 
-        .chat-item:hover, .user-item:hover {
+        .chat-item:hover, 
+        .user-item:hover {
             border-color: var(--accent-color);
             transform: translateY(-2px);
             box-shadow: var(--shadow);
         }
 
-        /* Поиск - улучшенный */
         .search-box {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
-            flex-direction: column;
         }
 
-        @media (min-width: 768px) {
-            .search-box {
-                flex-direction: row;
-            }
+        .search-box .form-input {
+            flex: 1;
         }
 
-        /* Профиль - улучшенный */
         .profile-form {
-            max-width: 100%;
+            max-width: 500px;
         }
 
         .avatar-upload {
@@ -380,32 +462,29 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: var(--text-secondary);
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .form-group small {
             color: var(--text-secondary);
-            font-size: 12px;
-            display: block;
-            margin-top: 4px;
+            font-size: 13px;
         }
 
-        /* Чат - улучшенный для телефонов */
         .chat-header {
             display: flex;
             align-items: center;
             gap: 12px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .btn-back {
             background: none;
             border: none;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
-            padding: 8px;
+            padding: 10px;
             border-radius: var(--border-radius);
             transition: var(--transition);
             min-width: 44px;
@@ -415,11 +494,14 @@
             justify-content: center;
         }
 
+        .btn-back:hover {
+            background: var(--secondary-bg);
+        }
+
         .chat-user-info {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex: 1;
         }
 
         .messages-container {
@@ -429,15 +511,27 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .message {
-            max-width: 85%;
+            max-width: 70%;
             padding: 12px 16px;
             border-radius: var(--border-radius);
             position: relative;
             animation: messageAppear 0.3s ease-out;
             word-wrap: break-word;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.sent {
@@ -474,12 +568,6 @@
             min-height: 44px;
         }
 
-        .message-input-container .btn-primary {
-            min-height: 44px;
-            padding: 12px 16px;
-        }
-
-        /* Модальное окно - улучшенное */
         .modal {
             display: none;
             position: fixed;
@@ -491,8 +579,13 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            padding: 20px;
             animation: fadeIn 0.3s ease-out;
+            padding: var(--mobile-padding);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal.active {
@@ -509,48 +602,6 @@
             animation: modalSlideIn 0.3s ease-out;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            flex-direction: column;
-        }
-
-        @media (min-width: 768px) {
-            .modal-actions {
-                flex-direction: row;
-            }
-        }
-
-        /* Анимации */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes messageAppear {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         @keyframes modalSlideIn {
             from {
                 opacity: 0;
@@ -562,7 +613,117 @@
             }
         }
 
-        /* Утилиты */
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 16px;
+            }
+            
+            .sidebar-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 8px;
+            }
+            
+            .nav-btn {
+                white-space: nowrap;
+                flex-shrink: 0;
+                min-width: 120px;
+                justify-content: center;
+                text-align: center;
+                transform: none !important;
+            }
+            
+            .nav-btn:hover,
+            .nav-btn.active {
+                transform: none !important;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+            
+            .header {
+                padding: 12px var(--mobile-padding);
+            }
+            
+            .content {
+                padding: var(--mobile-padding);
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .section-header h3 {
+                text-align: center;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .user-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+            }
+
+            .user-item button {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --mobile-padding: 12px;
+            }
+
+            .logo h1 {
+                font-size: 2rem;
+            }
+
+            .auth-form h2 {
+                font-size: 1.3rem;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                font-size: 15px;
+                padding: 12px 16px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
         .hidden {
             display: none !important;
         }
@@ -571,87 +732,76 @@
             text-align: center;
         }
 
-        .chat-info, .user-info {
+        .mt-4 {
+            margin-top: 24px;
+        }
+
+        .mb-4 {
+            margin-bottom: 24px;
+        }
+
+        .chat-info {
             flex: 1;
-            min-width: 0;
         }
 
-        .chat-info p, .user-info p {
+        .chat-info p {
             margin: 2px 0;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
-        .user-bio {
-            font-size: 12px !important;
-            color: var(--text-secondary) !important;
-            white-space: normal !important;
-            line-height: 1.4;
+        .user-info {
+            flex: 1;
         }
 
-        /* Улучшения для очень маленьких экранов */
-        @media (max-width: 360px) {
-            .sidebar {
-                padding: 12px;
-            }
-            
-            .nav-btn {
-                padding: 10px 12px;
-                font-size: 13px;
-            }
-            
-            .user-profile {
-                padding: 6px 10px;
-            }
-            
-            .content {
-                padding: 12px;
-            }
+        .user-info p {
+            margin: 2px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
         }
 
-        /* Планшеты и десктопы */
-        @media (min-width: 768px) {
-            .main-container {
-                flex-direction: row;
-            }
-            
-            .sidebar {
-                width: 280px;
-                flex-direction: column;
-                border-right: 1px solid var(--border-color);
-                border-bottom: none;
-                height: 100%;
-                overflow-y: auto;
-            }
-            
-            .sidebar-nav {
-                flex-direction: column;
-                overflow-x: visible;
-            }
-            
-            .nav-btn:hover, .nav-btn.active {
-                transform: translateX(8px);
-            }
-            
-            .search-box {
-                flex-direction: row;
-            }
-            
-            .modal-actions {
-                flex-direction: row;
-            }
-            
-            .message {
-                max-width: 70%;
-            }
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .error-message {
+            background: var(--error-color);
+            color: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin: 12px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: var(--success-color);
+            color: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin: 12px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Улучшение скроллбара для мобильных */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--secondary-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-    <!-- ОСТАВЛЯЕМ ТОТ ЖЕ HTML КОД, НО С УЛУЧШЕННЫМИ CSS -->
+    <!-- Остальная HTML структура остается без изменений -->
     <div id="app">
         <!-- Секция аутентификации -->
         <div id="auth-section" class="section active">
@@ -820,7 +970,8 @@
     </div>
 
     <script>
-        // Firebase конфигурация
+        // JavaScript код остается полностью без изменений
+        // === FIREBASE КОНФИГУРАЦИЯ ===
         const firebaseConfig = {
             apiKey: "AIzaSyD5uS50WpC2KRXDYY0XNV8II23kbHR_da0",
             authDomain: "hoto-d9e96.firebaseapp.com",
@@ -836,8 +987,565 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // ОСТАВЛЯЕМ ТОТ ЖЕ JAVASCRIPT КОД
-        // ... (весь предыдущий JavaScript код остается без изменений)
+        // === JAVASCRIPT КОД ===
+        let currentUser = null;
+        let currentUserData = null;
+        let currentChat = null;
+        let usersCache = new Map();
+        let chatsListener = null;
+        let messagesListener = null;
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            initAuth();
+            initEventListeners();
+        });
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const button = document.getElementById('theme-toggle');
+            button.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function initAuth() {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    await loadUserProfile(user.uid);
+                    showMainApp();
+                    loadChats();
+                } else {
+                    showAuth();
+                }
+            });
+        }
+
+        function initEventListeners() {
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('message-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+            document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchUsers();
+            });
+            document.getElementById('new-chat-modal').addEventListener('click', function(e) {
+                if (e.target === this) closeNewChatModal();
+            });
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function showAuth() {
+            document.getElementById('auth-section').classList.add('active');
+            document.getElementById('main-section').classList.remove('active');
+            showForm('login');
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-section').classList.remove('active');
+            document.getElementById('main-section').classList.add('active');
+        }
+
+        function showForm(formType) {
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(formType + '-form').classList.add('active');
+        }
+
+        async function register() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm').value;
+
+            if (!email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают!');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Пароль должен содержать минимум 6 символов');
+                return;
+            }
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    nickname: email.split('@')[0],
+                    username: generateUsername(email),
+                    bio: '',
+                    avatarUrl: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('Регистрация успешна!');
+            } catch (error) {
+                alert('Ошибка регистрации: ' + error.message);
+            }
+        }
+
+        function generateUsername(email) {
+            return email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_') + '_' + Math.random().toString(36).substr(2, 5);
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                alert('Ошибка входа: ' + error.message);
+            }
+        }
+
+        async function logout() {
+            if (chatsListener) chatsListener();
+            if (messagesListener) messagesListener();
+            await auth.signOut();
+        }
+
+        async function loadUserProfile(uid) {
+            try {
+                const doc = await db.collection('users').doc(uid).get();
+                if (doc.exists) {
+                    currentUserData = doc.data();
+                    updateProfileUI();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+            }
+        }
+
+        function updateProfileUI() {
+            if (!currentUserData) return;
+
+            const avatars = document.querySelectorAll('#user-avatar, #profile-avatar');
+            avatars.forEach(avatar => {
+                if (currentUserData.avatarUrl) {
+                    avatar.src = currentUserData.avatarUrl;
+                }
+            });
+
+            document.getElementById('user-nickname').textContent = currentUserData.nickname;
+            document.getElementById('profile-nickname').value = currentUserData.nickname;
+            document.getElementById('profile-username').value = currentUserData.username;
+            document.getElementById('profile-bio').value = currentUserData.bio || '';
+        }
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Пожалуйста, выберите изображение');
+                return;
+            }
+
+            try {
+                const storageRef = storage.ref();
+                const avatarRef = storageRef.child(`avatars/${currentUser.uid}/${Date.now()}_${file.name}`);
+                const snapshot = await avatarRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+
+                await db.collection('users').doc(currentUser.uid).update({
+                    avatarUrl: downloadURL
+                });
+
+                currentUserData.avatarUrl = downloadURL;
+                updateProfileUI();
+                alert('Аватар успешно обновлен!');
+            } catch (error) {
+                alert('Ошибка загрузки аватара: ' + error.message);
+            }
+        }
+
+        async function updateProfile() {
+            const nickname = document.getElementById('profile-nickname').value.trim();
+            const username = document.getElementById('profile-username').value.trim();
+            const bio = document.getElementById('profile-bio').value.trim();
+
+            if (!nickname || !username) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                alert('Username может содержать только английские буквы, цифры и нижние подчеркивания');
+                return;
+            }
+
+            try {
+                if (username !== currentUserData.username) {
+                    const usernameQuery = await db.collection('users')
+                        .where('username', '==', username)
+                        .get();
+                    
+                    if (!usernameQuery.empty) {
+                        alert('Этот username уже занят');
+                        return;
+                    }
+                }
+
+                await db.collection('users').doc(currentUser.uid).update({
+                    nickname: nickname,
+                    username: username,
+                    bio: bio
+                });
+
+                currentUserData.nickname = nickname;
+                currentUserData.username = username;
+                currentUserData.bio = bio;
+                
+                updateProfileUI();
+                alert('Профиль успешно обновлен!');
+            } catch (error) {
+                alert('Ошибка обновления профиля: ' + error.message);
+            }
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsContainer = document.getElementById('search-results');
+
+            if (!query) {
+                resultsContainer.innerHTML = '<p class="text-center">Введите username для поиска</p>';
+                return;
+            }
+
+            try {
+                resultsContainer.innerHTML = '<p class="text-center">Поиск...</p>';
+
+                const usersQuery = await db.collection('users')
+                    .where('username', '>=', query)
+                    .where('username', '<=', query + '\uf8ff')
+                    .limit(10)
+                    .get();
+
+                if (usersQuery.empty) {
+                    resultsContainer.innerHTML = '<p class="text-center">Пользователи не найдены</p>';
+                    return;
+                }
+
+                resultsContainer.innerHTML = '';
+                let foundUsers = false;
+                
+                usersQuery.forEach(doc => {
+                    const user = doc.data();
+                    if (doc.id !== currentUser.uid) {
+                        const userElement = createUserElement(user, doc.id);
+                        resultsContainer.appendChild(userElement);
+                        foundUsers = true;
+                    }
+                });
+
+                if (!foundUsers) {
+                    resultsContainer.innerHTML = '<p class="text-center">Пользователи не найдены</p>';
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<p class="text-center">Ошибка поиска</p>';
+            }
+        }
+
+        function createUserElement(user, userId) {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.innerHTML = `
+                <img src="${user.avatarUrl || 'https://via.placeholder.com/50?text=USER'}" 
+                     alt="Аватар" class="avatar">
+                <div class="user-info">
+                    <strong>${user.nickname}</strong>
+                    <p>@${user.username}</p>
+                    ${user.bio ? `<p>${user.bio}</p>` : ''}
+                </div>
+                <button onclick="startChatWithUser('${userId}')" class="btn-primary" style="margin-left: auto;">
+                    Написать
+                </button>
+            `;
+            return div;
+        }
+
+        async function startChatWithUser(userId) {
+            try {
+                const existingChat = await findExistingChat(userId);
+                
+                if (existingChat) {
+                    openChat(existingChat.id, userId);
+                } else {
+                    const chatRef = await db.collection('chats').add({
+                        participants: [currentUser.uid, userId],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: 'Чат создан',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    openChat(chatRef.id, userId);
+                }
+                
+                showSection('chat');
+            } catch (error) {
+                alert('Ошибка создания чата: ' + error.message);
+            }
+        }
+
+        async function findExistingChat(userId) {
+            const chatQuery = await db.collection('chats')
+                .where('participants', 'array-contains', currentUser.uid)
+                .get();
+
+            for (let doc of chatQuery.docs) {
+                const chat = doc.data();
+                if (chat.participants.includes(userId)) {
+                    return { id: doc.id, ...chat };
+                }
+            }
+            return null;
+        }
+
+        function loadChats() {
+            if (chatsListener) chatsListener();
+
+            chatsListener = db.collection('chats')
+                .where('participants', 'array-contains', currentUser.uid)
+                .orderBy('lastMessageTime', 'desc')
+                .onSnapshot(async (snapshot) => {
+                    const chatsContainer = document.getElementById('chats-list');
+                    chatsContainer.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        chatsContainer.innerHTML = '<p class="text-center">У вас пока нет чатов</p>';
+                        return;
+                    }
+
+                    for (let doc of snapshot.docs) {
+                        const chat = doc.data();
+                        const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+                        
+                        if (otherUserId) {
+                            const user = await getUserData(otherUserId);
+                            const chatElement = createChatElement(chat, doc.id, user);
+                            chatsContainer.appendChild(chatElement);
+                        }
+                    }
+                });
+        }
+
+        async function getUserData(userId) {
+            if (usersCache.has(userId)) {
+                return usersCache.get(userId);
+            }
+
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    const userData = doc.data();
+                    usersCache.set(userId, userData);
+                    return userData;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+            }
+            
+            return { nickname: 'Неизвестный', username: 'unknown', avatarUrl: '' };
+        }
+
+        function createChatElement(chat, chatId, user) {
+            const div = document.createElement('div');
+            div.className = 'chat-item';
+            div.onclick = () => openChat(chatId, chat.participants.find(id => id !== currentUser.uid));
+            
+            const lastMessageTime = chat.lastMessageTime ? 
+                formatTime(chat.lastMessageTime.toDate()) : '';
+            
+            div.innerHTML = `
+                <img src="${user.avatarUrl || 'https://via.placeholder.com/50?text=USER'}" 
+                     alt="Аватар" class="avatar">
+                <div class="chat-info">
+                    <strong>${user.nickname}</strong>
+                    <p>@${user.username}</p>
+                    ${chat.lastMessage ? `<small>${chat.lastMessage}</small>` : '<small>Нет сообщений</small>'}
+                </div>
+                ${lastMessageTime ? `<span class="message-time">${lastMessageTime}</span>` : ''}
+            `;
+            
+            return div;
+        }
+
+        async function openChat(chatId, otherUserId) {
+            currentChat = { id: chatId, otherUserId: otherUserId };
+            
+            const user = await getUserData(otherUserId);
+            document.getElementById('chat-username').textContent = user.nickname;
+            const chatAvatar = document.getElementById('chat-avatar');
+            chatAvatar.src = user.avatarUrl || 'https://via.placeholder.com/40?text=USER';
+            
+            document.getElementById('message-input').disabled = false;
+            document.querySelector('.message-input-container button').disabled = false;
+            
+            loadMessages(chatId);
+            showSection('chat');
+        }
+
+        function loadMessages(chatId) {
+            if (messagesListener) messagesListener();
+
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '<p class="text-center">Загрузка сообщений...</p>';
+
+            messagesListener = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    messagesContainer.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        messagesContainer.innerHTML = '<p class="text-center">Нет сообщений. Начните общение!</p>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const message = doc.data();
+                        const messageElement = createMessageElement(message);
+                        messagesContainer.appendChild(messageElement);
+                    });
+
+                    setTimeout(() => {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }, 100);
+                });
+        }
+
+        function createMessageElement(message) {
+            const div = document.createElement('div');
+            const isSent = message.senderId === currentUser.uid;
+            div.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            const time = message.timestamp ? formatTime(message.timestamp.toDate()) : 'только что';
+            
+            div.innerHTML = `
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">${time}</div>
+            `;
+            
+            return div;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+
+            if (!text || !currentChat) return;
+
+            try {
+                await db.collection('chats').doc(currentChat.id).collection('messages').add({
+                    text: text,
+                    senderId: currentUser.uid,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await db.collection('chats').doc(currentChat.id).update({
+                    lastMessage: text.length > 50 ? text.substring(0, 50) + '...' : text,
+                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                input.value = '';
+            } catch (error) {
+                alert('Ошибка отправки сообщения: ' + error.message);
+            }
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'только что';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' мин назад';
+            if (diff < 86400000) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            
+            return date.toLocaleDateString('ru-RU');
+        }
+
+        function showSection(sectionName) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (sectionName !== 'chat') {
+                const navBtn = document.querySelector(`.nav-btn[onclick="showSection('${sectionName}')"]`);
+                if (navBtn) navBtn.classList.add('active');
+            }
+        }
+
+        function startNewChat() {
+            document.getElementById('new-chat-modal').classList.add('active');
+        }
+
+        function closeNewChatModal() {
+            document.getElementById('new-chat-modal').classList.remove('active');
+            document.getElementById('new-chat-username').value = '';
+        }
+
+        async function createNewChat() {
+            const username = document.getElementById('new-chat-username').value.trim();
+            
+            if (!username) {
+                alert('Введите username');
+                return;
+            }
+
+            try {
+                const userQuery = await db.collection('users')
+                    .where('username', '==', username)
+                    .get();
+
+                if (userQuery.empty) {
+                    alert('Пользователь не найден');
+                    return;
+                }
+
+                const userDoc = userQuery.docs[0];
+                if (userDoc.id === currentUser.uid) {
+                    alert('Нельзя начать чат с самим собой');
+                    return;
+                }
+
+                closeNewChatModal();
+                await startChatWithUser(userDoc.id);
+                
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
