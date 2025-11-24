@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoto Messenger</title>
+    <style>
+        /* CSS код будет здесь */
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Секция аутентификации -->
+        <div id="auth-section" class="section active">
+            <div class="auth-container">
+                <div class="logo">
+                    <h1>🔥 Hoto</h1>
+                    <p>Мессенджер нового поколения</p>
+                </div>
+                
+                <div class="auth-forms">
+                    <!-- Форма входа -->
+                    <div id="login-form" class="auth-form active">
+                        <h2>Вход в аккаунт</h2>
+                        <input type="email" id="login-email" placeholder="Ваш email" class="form-input">
+                        <input type="password" id="login-password" placeholder="Пароль" class="form-input">
+                        <button onclick="login()" class="btn-primary">Войти</button>
+                        <div class="auth-links">
+                            <p>Нет аккаунта? <a href="#" onclick="showForm('register')">Создать аккаунт</a></p>
+                        </div>
+                    </div>
+
+                    <!-- Форма регистрации -->
+                    <div id="register-form" class="auth-form">
+                        <h2>Создать аккаунт</h2>
+                        <input type="email" id="register-email" placeholder="Email" class="form-input">
+                        <input type="password" id="register-password" placeholder="Пароль" class="form-input">
+                        <input type="password" id="register-confirm" placeholder="Подтвердите пароль" class="form-input">
+                        <button onclick="register()" class="btn-primary">Зарегистрироваться</button>
+                        <div class="auth-links">
+                            <p>Уже есть аккаунт? <a href="#" onclick="showForm('login')">Войти</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основное приложение -->
+        <div id="main-section" class="section">
+            <!-- Хедер -->
+            <header class="header">
+                <div class="header-left">
+                    <h2 class="app-title">Hoto</h2>
+                </div>
+                <div class="header-right">
+                    <button id="theme-toggle" class="icon-btn" title="Сменить тему">🌙</button>
+                    <button onclick="logout()" class="btn-secondary">Выйти</button>
+                </div>
+            </header>
+
+            <div class="main-container">
+                <!-- Сайдбар -->
+                <div class="sidebar">
+                    <div class="user-profile">
+                        <img id="user-avatar" src="https://via.placeholder.com/40?text=USER" alt="Аватар" class="avatar">
+                        <span id="user-nickname">Пользователь</span>
+                    </div>
+                    
+                    <nav class="sidebar-nav">
+                        <button onclick="showSection('chats')" class="nav-btn active">
+                            💬 Мои чаты
+                        </button>
+                        <button onclick="showSection('search')" class="nav-btn">
+                            🔍 Поиск
+                        </button>
+                        <button onclick="showSection('profile')" class="nav-btn">
+                            ⚙️ Профиль
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Основной контент -->
+                <div class="content">
+                    <!-- Секция чатов -->
+                    <div id="chats-section" class="content-section active">
+                        <div class="section-header">
+                            <h3>Мои чаты</h3>
+                            <button onclick="startNewChat()" class="btn-primary">Новый чат</button>
+                        </div>
+                        <div id="chats-list" class="chats-list">
+                            <p class="text-center">Загрузка чатов...</p>
+                        </div>
+                    </div>
+
+                    <!-- Секция поиска -->
+                    <div id="search-section" class="content-section">
+                        <div class="section-header">
+                            <h3>Поиск пользователей</h3>
+                        </div>
+                        <div class="search-box">
+                            <input type="text" id="search-input" placeholder="Введите username..." class="form-input">
+                            <button onclick="searchUsers()" class="btn-primary">Найти</button>
+                        </div>
+                        <div id="search-results" class="users-list">
+                            <p class="text-center">Введите username для поиска</p>
+                        </div>
+                    </div>
+
+                    <!-- Секция профиля -->
+                    <div id="profile-section" class="content-section">
+                        <div class="section-header">
+                            <h3>Настройки профиля</h3>
+                        </div>
+                        <div class="profile-form">
+                            <div class="avatar-upload">
+                                <img id="profile-avatar" src="https://via.placeholder.com/100?text=USER" alt="Аватар" class="avatar-large">
+                                <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                                <button onclick="document.getElementById('avatar-input').click()" class="btn-secondary">
+                                    Сменить аватар
+                                </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Никнейм:</label>
+                                <input type="text" id="profile-nickname" class="form-input" placeholder="Ваш никнейм">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Username:</label>
+                                <input type="text" id="profile-username" class="form-input" placeholder="unique_username">
+                                <small>Только английские буквы, цифры и _</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Описание:</label>
+                                <textarea id="profile-bio" class="form-input" rows="4" placeholder="Расскажите о себе..."></textarea>
+                            </div>
+                            
+                            <button onclick="updateProfile()" class="btn-primary">Сохранить изменения</button>
+                        </div>
+                    </div>
+
+                    <!-- Секция чата -->
+                    <div id="chat-section" class="content-section">
+                        <div class="chat-header">
+                            <button onclick="showSection('chats')" class="btn-back">← Назад</button>
+                            <div class="chat-user-info">
+                                <img id="chat-avatar" src="https://via.placeholder.com/40?text=USER" alt="Аватар" class="avatar">
+                                <span id="chat-username">Пользователь</span>
+                            </div>
+                        </div>
+                        
+                        <div id="messages-container" class="messages-container">
+                            <p class="text-center">Выберите чат для общения</p>
+                        </div>
+                        
+                        <div class="message-input-container">
+                            <input type="text" id="message-input" placeholder="Введите сообщение..." class="form-input" disabled>
+                            <button onclick="sendMessage()" class="btn-primary" disabled>Отправить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно нового чата -->
+    <div id="new-chat-modal" class="modal">
+        <div class="modal-content">
+            <h3>Новый чат</h3>
+            <input type="text" id="new-chat-username" placeholder="Введите username пользователя" class="form-input">
+            <div class="modal-actions">
+                <button onclick="createNewChat()" class="btn-primary">Создать чат</button>
+                <button onclick="closeNewChatModal()" class="btn-secondary">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase конфигурация
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5uS50WpC2KRXDYY0XNV8II23kbHR_da0",
+            authDomain: "hoto-d9e96.firebaseapp.com",
+            projectId: "hoto-d9e96",
+            storageBucket: "hoto-d9e96.firebasestorage.app",
+            messagingSenderId: "1024787203382",
+            appId: "1:1024787203382:web:5eb5e82a3337a53ec75f97"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+    </script>
+    
+    <script>
+        // JavaScript код будет здесь
+    </script>
+</body>
+</html>
