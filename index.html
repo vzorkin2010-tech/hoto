@@ -3,6 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ЗАЩИТА ОТ КОПИРОВАНИЯ И ПРОСМОТРА КОДА -->
+    <style>
+        /* Запрет выделения текста */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        /* Разрешить выделение для полей ввода */
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        /* Скрыть правый клик контекстное меню */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Запрет перетаскивания изображений */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+    </style>
+    
+    <script>
+        // ЗАЩИТА ОТ ПРОСМОТРА И КОПИРОВАНИЯ КОДА
+        document.addEventListener('DOMContentLoaded', function() {
+            // Блокировка F12
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                    (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                    (e.ctrlKey && e.key === 'U') ||
+                    (e.keyCode === 123)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Блокировка правого клика
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Блокировка комбинаций клавиш
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+U (просмотр исходного кода)
+                if (e.ctrlKey && e.key === 'u') {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+I (инструменты разработчика)
+                if (e.ctrlKey && e.shiftKey && e.key === 'i') {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+J (консоль JavaScript)
+                if (e.ctrlKey && e.shiftKey && e.key === 'j') {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+C (инспектор элементов)
+                if (e.ctrlKey && e.shiftKey && e.key === 'c') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Защита от открытия инструментов разработчика
+            let devToolsOpen = false;
+            const threshold = 160;
+            
+            const checkDevTools = function() {
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                const orientation = widthThreshold ? 'vertical' : 'horizontal';
+                
+                if (!(heightThreshold && widthThreshold) &&
+                    ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || 
+                     widthThreshold || 
+                     heightThreshold)) {
+                    
+                    if (!devToolsOpen) {
+                        devToolsOpen = true;
+                        document.body.innerHTML = '<div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;"><h1>⚠️ Доступ запрещен</h1><p>Инструменты разработчика не разрешены на этом сайте.</p><p>Пожалуйста, закройте инструменты разработчика чтобы продолжить использование приложения.</p></div>';
+                        document.body.style.background = '#f8f9fa';
+                        document.body.style.color = '#333';
+                    }
+                } else {
+                    devToolsOpen = false;
+                }
+            };
+            
+            // Проверка каждые 500ms
+            setInterval(checkDevTools, 500);
+            
+            // Дополнительная защита от debugger
+            function antiDebug() {
+                function checkDebugger() {
+                    const startTime = performance.now();
+                    debugger;
+                    const endTime = performance.now();
+                    if (endTime - startTime > 100) {
+                        document.body.innerHTML = '<div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;"><h1>🔒 Обнаружены инструменты отладки</h1><p>Отладка кода запрещена.</p></div>';
+                        document.body.style.background = '#f8f9fa';
+                        document.body.style.color = '#333';
+                    }
+                }
+                
+                try {
+                    checkDebugger();
+                } catch (e) {
+                    // Игнорировать ошибки
+                }
+            }
+            
+            // Запуск защиты от отладки
+            setInterval(antiDebug, 1000);
+            
+            // Защита от копирования через буфер обмена
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+                alert('Копирование содержимого запрещено!');
+                return false;
+            });
+            
+            document.addEventListener('cut', function(e) {
+                e.preventDefault();
+                alert('Вырезание содержимого запрещено!');
+                return false;
+            });
+            
+            document.addEventListener('paste', function(e) {
+                e.preventDefault();
+                alert('Вставка содержимого запрещена!');
+                return false;
+            });
+            
+            // Защита от перетаскивания
+            document.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        });
+
+        // Дополнительная защита при загрузке страницы
+        window.onload = function() {
+            // Проверка на открытие инструментов разработчика при загрузке
+            if (window.outerWidth - window.innerWidth > 100 || 
+                window.outerHeight - window.innerHeight > 100) {
+                document.body.innerHTML = '<div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;"><h1>🚫 Обнаружены инструменты разработчика</h1><p>Пожалуйста, закройте инструменты разработчика для доступа к приложению.</p></div>';
+                document.body.style.background = '#f8f9fa';
+                document.body.style.color = '#333';
+            }
+        };
+    </script>
+    
     <title>Hoto Messenger</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -1093,7 +1272,6 @@
                             <p class="text-center">Выберите чат для общения</p>
                         </div>
                         
-                        <!-- ИСПРАВЛЕННОЕ ПОЛЕ ВВОДА -->
                         <div class="message-input-container">
                             <div class="message-input-wrapper">
                                 <textarea 
