@@ -432,6 +432,76 @@
             background: #c82333;
             transform: translateY(-2px);
         }
+
+        /* СТИЛИ ДЛЯ ИЗБРАННОГО */
+        .favorite-message {
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #ffd700;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .favorite-message:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-left-color: #ffc107;
+        }
+
+        .favorite-message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .favorite-message-content {
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .favorite-message-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .favorite-message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        .favorite-empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .favorite-empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .message-action-btn.favorite {
+            color: #ffd700;
+        }
+
+        .message-action-btn.favorite.active {
+            color: #ffc107;
+            text-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+        }
     </style>
     
     <script>
@@ -982,7 +1052,8 @@
         }
 
         .chats-list, 
-        .users-list {
+        .users-list,
+        .favorites-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -992,23 +1063,27 @@
         }
 
         .chats-list::-webkit-scrollbar,
-        .users-list::-webkit-scrollbar {
+        .users-list::-webkit-scrollbar,
+        .favorites-list::-webkit-scrollbar {
             width: 6px;
         }
 
         .chats-list::-webkit-scrollbar-thumb,
-        .users-list::-webkit-scrollbar-thumb {
+        .users-list::-webkit-scrollbar-thumb,
+        .favorites-list::-webkit-scrollbar-thumb {
             background: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
         }
 
         [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
+        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb,
+        [data-theme="dark"] .favorites-list::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
         }
 
         .chats-list::-webkit-scrollbar-thumb:hover,
-        .users-list::-webkit-scrollbar-thumb:hover {
+        .users-list::-webkit-scrollbar-thumb:hover,
+        .favorites-list::-webkit-scrollbar-thumb:hover {
             background: var(--accent-color);
         }
 
@@ -1228,6 +1303,15 @@
 
         .message-action-btn.edit {
             color: var(--accent-color);
+        }
+
+        .message-action-btn.favorite {
+            color: #ffd700;
+        }
+
+        .message-action-btn.favorite.active {
+            color: #ffc107;
+            text-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
         }
 
         .message-time {
@@ -1721,6 +1805,9 @@
                         <button onclick="showSection('chats')" class="nav-btn active">
                             💬 Мои чаты
                         </button>
+                        <button onclick="showSection('favorites')" class="nav-btn">
+                            ⭐ Избранное
+                        </button>
                         <button onclick="showSection('search')" class="nav-btn">
                             🔍 Поиск
                         </button>
@@ -1739,6 +1826,20 @@
                         </div>
                         <div id="chats-list" class="chats-list">
                             <p class="text-center">Загрузка пользователей...</p>
+                        </div>
+                    </div>
+
+                    <!-- Секция избранного -->
+                    <div id="favorites-section" class="content-section">
+                        <div class="section-header">
+                            <h3>Избранные сообщения</h3>
+                        </div>
+                        <div id="favorites-list" class="favorites-list">
+                            <div class="favorite-empty-state">
+                                <div class="icon">⭐</div>
+                                <p>Здесь будут сохраняться важные сообщения</p>
+                                <p>Нажмите на звездочку в сообщении, чтобы добавить его в избранное</p>
+                            </div>
                         </div>
                     </div>
 
@@ -1880,6 +1981,7 @@
         let usersCache = new Map();
         let chatsListener = null;
         let messagesListener = null;
+        let favoritesListener = null;
         let searchTimeout = null;
         let editingMessageId = null;
 
@@ -2024,6 +2126,159 @@
                     e.target.value = '';
                 }
             });
+        }
+
+        // ФУНКЦИИ ДЛЯ РАБОТЫ С ИЗБРАННЫМ
+        async function toggleFavorite(messageId, messageData) {
+            if (!currentUser) return;
+
+            try {
+                const favoriteRef = db.collection('users').doc(currentUser.uid)
+                    .collection('favorites').doc(messageId);
+
+                const favoriteDoc = await favoriteRef.get();
+
+                if (favoriteDoc.exists) {
+                    // Удаляем из избранного
+                    await favoriteRef.delete();
+                    return false;
+                } else {
+                    // Добавляем в избранное
+                    await favoriteRef.set({
+                        ...messageData,
+                        favoriteDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        originalChatId: currentChat.id,
+                        originalChatUserId: currentChat.otherUserId
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.error('Ошибка работы с избранным:', error);
+                alert('Ошибка: ' + error.message);
+                return false;
+            }
+        }
+
+        async function loadFavorites() {
+            if (!currentUser) return;
+
+            const favoritesContainer = document.getElementById('favorites-list');
+            favoritesContainer.innerHTML = '<p class="text-center">Загрузка избранного...</p>';
+
+            if (favoritesListener) favoritesListener();
+
+            favoritesListener = db.collection('users').doc(currentUser.uid)
+                .collection('favorites')
+                .orderBy('favoriteDate', 'desc')
+                .onSnapshot(async (snapshot) => {
+                    favoritesContainer.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        favoritesContainer.innerHTML = `
+                            <div class="favorite-empty-state">
+                                <div class="icon">⭐</div>
+                                <p>Здесь будут сохраняться важные сообщения</p>
+                                <p>Нажмите на звездочку в сообщении, чтобы добавить его в избранное</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    for (const doc of snapshot.docs) {
+                        const favorite = doc.data();
+                        const favoriteElement = await createFavoriteElement(favorite, doc.id);
+                        favoritesContainer.appendChild(favoriteElement);
+                    }
+                }, (error) => {
+                    console.error('Ошибка загрузки избранного:', error);
+                    favoritesContainer.innerHTML = '<p class="text-center">Ошибка загрузки избранного</p>';
+                });
+        }
+
+        async function createFavoriteElement(favorite, favoriteId) {
+            const div = document.createElement('div');
+            div.className = 'favorite-message';
+
+            // Получаем информацию о пользователе
+            let userName = 'Неизвестный пользователь';
+            try {
+                const userDoc = await db.collection('users').doc(favorite.senderId).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userName = userData.nickname || userData.username;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+            }
+
+            const time = favorite.timestamp ? formatTime(favorite.timestamp.toDate()) : 'Неизвестно';
+            const favoriteDate = favorite.favoriteDate ? formatTime(favorite.favoriteDate.toDate()) : '';
+
+            let contentHTML = '';
+            if (favorite.type === 'file') {
+                contentHTML = `
+                    <div class="favorite-message-file">
+                        <div class="file-icon">${getFileIcon(favorite.fileType)}</div>
+                        <div class="file-info">
+                            <div class="file-name">${favorite.fileName}</div>
+                            <div class="file-size">${formatFileSize(favorite.fileSize)}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                contentHTML = `<div class="favorite-message-content">${favorite.text || ''}</div>`;
+            }
+
+            div.innerHTML = `
+                <div class="favorite-message-header">
+                    <div>
+                        <strong>${userName}</strong>
+                        <span> • ${time}</span>
+                    </div>
+                    <small>Добавлено: ${favoriteDate}</small>
+                </div>
+                ${contentHTML}
+                <div class="favorite-message-actions">
+                    <button class="btn-secondary" onclick="openFavoriteChat('${favorite.originalChatId}', '${favorite.originalChatUserId}')">
+                        Перейти к чату
+                    </button>
+                    <button class="btn-secondary" onclick="removeFromFavorites('${favoriteId}')">
+                        Удалить
+                    </button>
+                </div>
+            `;
+
+            return div;
+        }
+
+        async function openFavoriteChat(chatId, userId) {
+            try {
+                // Проверяем существование чата
+                const chatDoc = await db.collection('chats').doc(chatId).get();
+                if (!chatDoc.exists) {
+                    alert('Чат больше не существует');
+                    return;
+                }
+
+                // Открываем чат
+                await openChat(chatId, userId);
+                showSection('chat');
+            } catch (error) {
+                console.error('Ошибка открытия чата:', error);
+                alert('Ошибка открытия чата: ' + error.message);
+            }
+        }
+
+        async function removeFromFavorites(favoriteId) {
+            if (!confirm('Удалить сообщение из избранного?')) return;
+
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('favorites').doc(favoriteId).delete();
+            } catch (error) {
+                console.error('Ошибка удаления из избранного:', error);
+                alert('Ошибка удаления: ' + error.message);
+            }
         }
 
         // ОСНОВНЫЕ ФУНКЦИИ МЕССЕНДЖЕРА
@@ -2250,7 +2505,7 @@
             // Реальная подписка на обновления сообщений
             messagesListener = db.collection('chats').doc(chatId).collection('messages')
                 .orderBy('timestamp', 'asc')
-                .onSnapshot((snapshot) => {
+                .onSnapshot(async (snapshot) => {
                     messagesContainer.innerHTML = '';
                     
                     if (snapshot.empty) {
@@ -2258,8 +2513,18 @@
                         return;
                     }
 
+                    // Проверяем какие сообщения уже в избранном
+                    const favoritesSnapshot = await db.collection('users').doc(currentUser.uid)
+                        .collection('favorites').get();
+                    
+                    const favoriteIds = new Set();
+                    favoritesSnapshot.forEach(doc => {
+                        favoriteIds.add(doc.id);
+                    });
+
                     snapshot.forEach(doc => {
                         const message = doc.data();
+                        message.isFavorite = favoriteIds.has(doc.id);
                         const messageElement = createMessageElement(message, doc.id);
                         messagesContainer.appendChild(messageElement);
                     });
@@ -2282,6 +2547,9 @@
             
             const time = message.timestamp ? formatTime(message.timestamp.toDate()) : 'только что';
             
+            // Проверяем, находится ли сообщение в избранном
+            const isFavorite = message.isFavorite || false;
+            
             if (isEditing) {
                 div.innerHTML = `
                     <input type="text" class="edit-input" value="${message.text}" id="edit-input-${messageId}">
@@ -2302,6 +2570,9 @@
                         </div>
                     </div>
                     <div class="message-actions">
+                        <button class="message-action-btn favorite ${isFavorite ? 'active' : ''}" onclick="toggleMessageFavorite('${messageId}', this)">
+                            ${isFavorite ? '★' : '☆'}
+                        </button>
                         <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
                     </div>
                     <div class="message-time">${time}</div>
@@ -2311,6 +2582,9 @@
                 div.innerHTML = `
                     <div class="message-text">${message.text || ''}</div>
                     <div class="message-actions">
+                        <button class="message-action-btn favorite ${isFavorite ? 'active' : ''}" onclick="toggleMessageFavorite('${messageId}', this)">
+                            ${isFavorite ? '★' : '☆'}
+                        </button>
                         <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
                         <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
                     </div>
@@ -2319,6 +2593,40 @@
             }
             
             return div;
+        }
+
+        // ФУНКЦИЯ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ИЗБРАННОГО СООБЩЕНИЯ
+        async function toggleMessageFavorite(messageId, button) {
+            if (!currentChat) return;
+
+            try {
+                // Получаем данные сообщения
+                const messageDoc = await db.collection('chats').doc(currentChat.id)
+                    .collection('messages').doc(messageId).get();
+                
+                if (!messageDoc.exists) {
+                    alert('Сообщение не найдено');
+                    return;
+                }
+
+                const messageData = messageDoc.data();
+                const isNowFavorite = await toggleFavorite(messageId, messageData);
+
+                // Обновляем внешний вид кнопки
+                if (isNowFavorite) {
+                    button.classList.add('active');
+                    button.innerHTML = '★';
+                } else {
+                    button.classList.remove('active');
+                    button.innerHTML = '☆';
+                }
+
+                // Обновляем статус в локальных данных
+                messageData.isFavorite = isNowFavorite;
+            } catch (error) {
+                console.error('Ошибка добавления в избранное:', error);
+                alert('Ошибка: ' + error.message);
+            }
         }
 
         function getFileIcon(fileType) {
@@ -2683,6 +2991,7 @@
         async function logout() {
             if (chatsListener) chatsListener();
             if (messagesListener) messagesListener();
+            if (favoritesListener) favoritesListener();
             
             await auth.signOut();
         }
@@ -2774,6 +3083,11 @@
             if (sectionName !== 'chat') {
                 const navBtn = document.querySelector(`.nav-btn[onclick="showSection('${sectionName}')"]`);
                 if (navBtn) navBtn.classList.add('active');
+            }
+
+            // Загружаем избранное при переходе на вкладку
+            if (sectionName === 'favorites') {
+                loadFavorites();
             }
         }
 
