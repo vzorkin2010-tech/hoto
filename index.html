@@ -917,8 +917,7 @@
         }
 
         .chats-list, 
-        .users-list,
-        .favorites-list {
+        .users-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -928,33 +927,28 @@
         }
 
         .chats-list::-webkit-scrollbar,
-        .users-list::-webkit-scrollbar,
-        .favorites-list::-webkit-scrollbar {
+        .users-list::-webkit-scrollbar {
             width: 6px;
         }
 
         .chats-list::-webkit-scrollbar-thumb,
-        .users-list::-webkit-scrollbar-thumb,
-        .favorites-list::-webkit-scrollbar-thumb {
+        .users-list::-webkit-scrollbar-thumb {
             background: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
         }
 
         [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .favorites-list::-webkit-scrollbar-thumb {
+        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
         }
 
         .chats-list::-webkit-scrollbar-thumb:hover,
-        .users-list::-webkit-scrollbar-thumb:hover,
-        .favorites-list::-webkit-scrollbar-thumb:hover {
+        .users-list::-webkit-scrollbar-thumb:hover {
             background: var(--accent-color);
         }
 
         .chat-item, 
-        .user-item,
-        .favorite-item {
+        .user-item {
             display: flex;
             align-items: center;
             gap: 16px;
@@ -968,8 +962,7 @@
         }
 
         .chat-item:hover, 
-        .user-item:hover,
-        .favorite-item:hover {
+        .user-item:hover {
             border-color: var(--accent-color);
             transform: translateY(-2px);
             box-shadow: var(--shadow);
@@ -1170,10 +1163,6 @@
 
         .message-action-btn.edit {
             color: var(--accent-color);
-        }
-
-        .message-action-btn.favorite {
-            color: #ffc107;
         }
 
         .message-time {
@@ -1427,74 +1416,25 @@
             min-height: 60px;
         }
 
-        /* СТИЛИ ДЛЯ ВКЛАДКИ ИЗБРАННОЕ */
-        .favorite-item {
+        /* СТИЛИ ДЛЯ ИЗБРАННОГО ЧАТА */
+        .favorites-chat-info {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .favorite-content {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary-bg);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
-        }
-
-        .favorite-meta {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            width: 100%;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .favorite-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .favorite-action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: var(--transition);
-            color: var(--text-secondary);
-        }
-
-        .favorite-action-btn:hover {
-            background: var(--secondary-bg);
-        }
-
-        .favorite-action-btn.delete {
-            color: var(--error-color);
-        }
-
-        .add-favorite-container {
-            display: flex;
             gap: 12px;
-            margin-bottom: 20px;
         }
 
-        .add-favorite-input {
-            flex: 1;
-        }
-
-        .favorite-empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-
-        .favorite-empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+        .favorites-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ffc107, #ff9800);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px solid #ffc107;
         }
 
         @media (max-width: 768px) {
@@ -1592,10 +1532,6 @@
 
             .message.sent .message-actions {
                 justify-content: flex-start;
-            }
-
-            .add-favorite-container {
-                flex-direction: column;
             }
         }
 
@@ -1730,9 +1666,6 @@
                         <button onclick="showSection('search')" class="nav-btn">
                             🔍 Поиск
                         </button>
-                        <button onclick="showSection('favorites')" class="nav-btn">
-                            ⭐ Избранное
-                        </button>
                         <button onclick="showSection('profile')" class="nav-btn">
                             ⚙️ Профиль
                         </button>
@@ -1747,6 +1680,7 @@
                             <h3>Мои чаты</h3>
                         </div>
                         <div id="chats-list" class="chats-list">
+                            <!-- Чат "Избранное" будет добавлен автоматически -->
                             <p class="text-center">Загрузка пользователей...</p>
                         </div>
                     </div>
@@ -1761,24 +1695,6 @@
                         </div>
                         <div id="search-results" class="users-list">
                             <p class="text-center">Введите username для поиска</p>
-                        </div>
-                    </div>
-
-                    <!-- Секция избранного -->
-                    <div id="favorites-section" class="content-section">
-                        <div class="section-header">
-                            <h3>Избранное</h3>
-                        </div>
-                        <div class="add-favorite-container">
-                            <input type="text" id="new-favorite-input" placeholder="Добавить заметку..." class="form-input add-favorite-input">
-                            <button onclick="addFavoriteNote()" class="btn-primary">Добавить</button>
-                        </div>
-                        <div id="favorites-list" class="favorites-list">
-                            <div class="favorite-empty">
-                                <div class="favorite-empty-icon">⭐</div>
-                                <p>Пока нет избранных заметок</p>
-                                <p>Добавьте свою первую заметку или сохраните сообщение из чата</p>
-                            </div>
                         </div>
                     </div>
 
@@ -1816,7 +1732,7 @@
                     <div id="chat-section" class="content-section">
                         <div class="chat-header">
                             <button onclick="showSection('chats')" class="btn-back">←</button>
-                            <div class="chat-user-info" onclick="showUserProfile()">
+                            <div class="chat-user-info" id="chat-user-info">
                                 <div id="chat-avatar" class="avatar">U</div>
                                 <span id="chat-username">Пользователь</span>
                             </div>
@@ -1903,11 +1819,14 @@
         let messagesListener = null;
         let searchTimeout = null;
         let editingMessageId = null;
-        let favoritesListener = null;
 
         // === СИСТЕМА УВЕДОМЛЕНИЙ ===
         let notificationListener = null;
         let currentNotifications = new Map();
+
+        // === ЧАТ ИЗБРАННОГО ===
+        const FAVORITES_CHAT_ID = 'favorites_chat';
+        const FAVORITES_BOT_ID = 'favorites_bot';
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', function() {
@@ -1937,7 +1856,8 @@
                     showMainApp();
                     loadAllUsers();
                     initNotifications();
-                    loadFavorites();
+                    // Создаем или загружаем чат "Избранное"
+                    await initFavoritesChat();
                 } else {
                     showAuth();
                 }
@@ -1967,14 +1887,6 @@
             document.getElementById('message-input').addEventListener('input', function() {
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            });
-
-            // Enter для добавления заметки в избранное
-            document.getElementById('new-favorite-input').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    addFavoriteNote();
-                }
             });
 
             // Закрытие модального окна по клику на фон
@@ -2038,6 +1950,92 @@
             });
         }
 
+        // === ЧАТ ИЗБРАННОГО ===
+
+        // Инициализация чата "Избранное"
+        async function initFavoritesChat() {
+            try {
+                // Проверяем, существует ли уже чат "Избранное"
+                const chatDoc = await db.collection('chats').doc(FAVORITES_CHAT_ID).get();
+                
+                if (!chatDoc.exists) {
+                    // Создаем новый чат "Избранное"
+                    await db.collection('chats').doc(FAVORITES_CHAT_ID).set({
+                        participants: [currentUser.uid, FAVORITES_BOT_ID],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: 'Чат для ваших заметок и важной информации',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        participantNames: {
+                            [currentUser.uid]: currentUserData.nickname,
+                            [FAVORITES_BOT_ID]: 'Избранное'
+                        },
+                        participantAvatars: {},
+                        isFavoritesChat: true
+                    });
+
+                    // Добавляем приветственное сообщение
+                    await db.collection('chats').doc(FAVORITES_CHAT_ID).collection('messages').add({
+                        text: 'Добро пожаловать в чат "Избранное"! 📌\n\nЗдесь вы можете сохранять важные сообщения, заметки, файлы и другую информацию. Этот чат работает как ваша личная записная книжка.\n\nПросто отправляйте сюда сообщения - они сохранятся и будут доступны в любое время.',
+                        senderId: FAVORITES_BOT_ID,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        isSystemMessage: true
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка инициализации чата "Избранное":', error);
+            }
+        }
+
+        // Открытие чата "Избранное"
+        function openFavoritesChat() {
+            currentChat = { 
+                id: FAVORITES_CHAT_ID, 
+                otherUserId: FAVORITES_BOT_ID,
+                isFavoritesChat: true 
+            };
+            
+            currentChatUser = {
+                nickname: 'Избранное',
+                username: 'favorites',
+                bio: 'Чат для ваших заметок и важной информации'
+            };
+            
+            // Обновляем интерфейс чата
+            document.getElementById('chat-username').textContent = 'Избранное';
+            const chatAvatar = document.getElementById('chat-avatar');
+            chatAvatar.className = 'favorites-avatar';
+            chatAvatar.textContent = '⭐';
+            
+            // Обновляем информацию о чате для клика
+            const chatUserInfo = document.getElementById('chat-user-info');
+            chatUserInfo.setAttribute('onclick', 'showFavoritesInfo()');
+            
+            // Включаем поле ввода
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.querySelector('.send-button');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.placeholder = 'Сохраните заметку, ссылку или файл...';
+            messageInput.focus();
+            
+            loadMessages(FAVORITES_CHAT_ID);
+            showSection('chat');
+        }
+
+        // Показать информацию о чате "Избранное"
+        function showFavoritesInfo() {
+            const modal = document.getElementById('user-profile-modal');
+            
+            document.getElementById('modal-avatar').className = 'avatar-large';
+            document.getElementById('modal-avatar').style.background = 'linear-gradient(45deg, #ffc107, #ff9800)';
+            document.getElementById('modal-avatar').textContent = '⭐';
+            document.getElementById('modal-nickname').textContent = 'Избранное';
+            document.getElementById('modal-username').textContent = '@favorites';
+            document.getElementById('modal-bio').textContent = 'Чат для ваших заметок и важной информации. Все отправленные сюда сообщения сохраняются и доступны в любое время. Используйте этот чат как личную записную книжку.';
+            
+            modal.classList.add('active');
+        }
+
         // === СИСТЕМА УВЕДОМЛЕНИЙ ===
 
         // Инициализация системы уведомлений
@@ -2059,6 +2057,9 @@
         async function checkForNewMessages(chatDoc) {
             const chatData = chatDoc.data();
             const chatId = chatDoc.id;
+            
+            // Пропускаем чат "Избранное"
+            if (chatId === FAVORITES_CHAT_ID) return;
             
             // Получаем последнее сообщение
             const messagesQuery = await db.collection('chats').doc(chatId).collection('messages')
@@ -2243,122 +2244,6 @@
                 }
             } catch (error) {
                 console.error('Ошибка открытия чата:', error);
-            }
-        }
-
-        // === СИСТЕМА ИЗБРАННОГО ===
-
-        // Загрузка избранных заметок
-        function loadFavorites() {
-            if (favoritesListener) favoritesListener();
-            
-            const favoritesContainer = document.getElementById('favorites-list');
-            favoritesContainer.innerHTML = '<p class="text-center">Загрузка...</p>';
-            
-            favoritesListener = db.collection('favorites')
-                .where('userId', '==', currentUser.uid)
-                .orderBy('createdAt', 'desc')
-                .onSnapshot((snapshot) => {
-                    favoritesContainer.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        favoritesContainer.innerHTML = `
-                            <div class="favorite-empty">
-                                <div class="favorite-empty-icon">⭐</div>
-                                <p>Пока нет избранных заметок</p>
-                                <p>Добавьте свою первую заметку или сохраните сообщение из чата</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    snapshot.forEach(doc => {
-                        const favorite = doc.data();
-                        const favoriteElement = createFavoriteElement(favorite, doc.id);
-                        favoritesContainer.appendChild(favoriteElement);
-                    });
-                }, (error) => {
-                    console.error('Ошибка загрузки избранного:', error);
-                    favoritesContainer.innerHTML = '<p class="text-center">Ошибка загрузки</p>';
-                });
-        }
-
-        // Создание элемента избранного
-        function createFavoriteElement(favorite, favoriteId) {
-            const div = document.createElement('div');
-            div.className = 'favorite-item';
-            
-            const time = favorite.createdAt ? formatTime(favorite.createdAt.toDate()) : 'недавно';
-            
-            div.innerHTML = `
-                <div class="favorite-content">${favorite.content}</div>
-                <div class="favorite-meta">
-                    <span>${time}</span>
-                    <div class="favorite-actions">
-                        <button class="favorite-action-btn delete" onclick="deleteFavorite('${favoriteId}')">🗑️</button>
-                    </div>
-                </div>
-            `;
-            
-            return div;
-        }
-
-        // Добавление новой заметки в избранное
-        async function addFavoriteNote() {
-            const input = document.getElementById('new-favorite-input');
-            const content = input.value.trim();
-            
-            if (!content) {
-                alert('Введите текст заметки');
-                return;
-            }
-            
-            try {
-                await db.collection('favorites').add({
-                    userId: currentUser.uid,
-                    content: content,
-                    type: 'note',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                input.value = '';
-                input.focus();
-            } catch (error) {
-                console.error('Ошибка добавления заметки:', error);
-                alert('Ошибка добавления заметки: ' + error.message);
-            }
-        }
-
-        // Сохранение сообщения в избранное
-        async function saveMessageToFavorites(messageId, messageText) {
-            try {
-                await db.collection('favorites').add({
-                    userId: currentUser.uid,
-                    content: messageText,
-                    type: 'message',
-                    messageId: messageId,
-                    chatId: currentChat.id,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                alert('Сообщение сохранено в избранное!');
-            } catch (error) {
-                console.error('Ошибка сохранения сообщения:', error);
-                alert('Ошибка сохранения сообщения: ' + error.message);
-            }
-        }
-
-        // Удаление избранного
-        async function deleteFavorite(favoriteId) {
-            if (!confirm('Удалить эту заметку из избранного?')) {
-                return;
-            }
-            
-            try {
-                await db.collection('favorites').doc(favoriteId).delete();
-            } catch (error) {
-                console.error('Ошибка удаления избранного:', error);
-                alert('Ошибка удаления: ' + error.message);
             }
         }
 
@@ -2573,7 +2458,6 @@
         async function logout() {
             if (chatsListener) chatsListener();
             if (messagesListener) messagesListener();
-            if (favoritesListener) favoritesListener();
             if (notificationListener) {
                 notificationListener();
                 notificationListener = null;
@@ -2667,8 +2551,12 @@
                 const chatsContainer = document.getElementById('chats-list');
                 chatsContainer.innerHTML = '';
 
+                // Добавляем чат "Избранное" в начало списка
+                const favoritesChatElement = createFavoritesChatElement();
+                chatsContainer.appendChild(favoritesChatElement);
+
                 if (usersQuery.empty) {
-                    chatsContainer.innerHTML = '<p class="text-center">Нет пользователей</p>';
+                    chatsContainer.innerHTML += '<p class="text-center">Нет пользователей</p>';
                     return;
                 }
 
@@ -2683,6 +2571,22 @@
                 console.error('Ошибка загрузки пользователей:', error);
                 document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
             }
+        }
+
+        // Создание элемента чата "Избранное"
+        function createFavoritesChatElement() {
+            const div = document.createElement('div');
+            div.className = 'chat-item';
+            div.onclick = () => openFavoritesChat();
+            
+            div.innerHTML = `
+                <div class="favorites-avatar">⭐</div>
+                <div class="chat-info">
+                    <strong>Избранное</strong>
+                    <p>Чат для заметок и важной информации</p>
+                </div>
+            `;
+            return div;
         }
 
         async function searchUsers() {
@@ -2825,13 +2729,19 @@
             document.getElementById('chat-username').textContent = currentChatUser.nickname;
             const chatAvatar = document.getElementById('chat-avatar');
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
+            chatAvatar.className = 'avatar';
             chatAvatar.textContent = firstLetter;
+            
+            // Обновляем информацию о чате для клика
+            const chatUserInfo = document.getElementById('chat-user-info');
+            chatUserInfo.setAttribute('onclick', 'showUserProfile()');
             
             // Включаем поле ввода
             const messageInput = document.getElementById('message-input');
             const sendButton = document.querySelector('.send-button');
             messageInput.disabled = false;
             sendButton.disabled = false;
+            messageInput.placeholder = 'Введите сообщение или перетащите файл...';
             messageInput.focus();
             
             loadMessages(chatId);
@@ -2845,6 +2755,8 @@
             const modal = document.getElementById('user-profile-modal');
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
             
+            document.getElementById('modal-avatar').className = 'avatar-large';
+            document.getElementById('modal-avatar').style.background = '';
             document.getElementById('modal-avatar').textContent = firstLetter;
             document.getElementById('modal-nickname').textContent = currentChatUser.nickname || 'Неизвестно';
             document.getElementById('modal-username').textContent = '@' + (currentChatUser.username || 'unknown');
@@ -2894,8 +2806,9 @@
         function createMessageElement(message, messageId) {
             const div = document.createElement('div');
             const isSent = message.senderId === currentUser.uid;
+            const isSystem = message.isSystemMessage;
             const isEditing = editingMessageId === messageId;
-            div.className = `message ${isSent ? 'sent' : 'received'} ${isEditing ? 'editing' : ''}`;
+            div.className = `message ${isSent ? 'sent' : 'received'} ${isEditing ? 'editing' : ''} ${isSystem ? 'system' : ''}`;
             
             const time = message.timestamp ? formatTime(message.timestamp.toDate()) : 'только что';
             
@@ -2932,11 +2845,8 @@
                     <div class="message-actions">
                         ${isSent ? `
                             <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
-                            <button class="message-action-btn favorite" onclick="saveMessageToFavorites('${messageId}', '${message.text}')">⭐</button>
                             <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
-                        ` : `
-                            <button class="message-action-btn favorite" onclick="saveMessageToFavorites('${messageId}', '${message.text}')">⭐</button>
-                        `}
+                        ` : ''}
                     </div>
                     <div class="message-time">${time}</div>
                 `;
@@ -3132,4 +3042,4 @@
 
     </script>
 </body>
-</html>
+</html>0
