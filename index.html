@@ -219,7 +219,7 @@
             display: flex;
         }
 
-        /* === СТИЛИ ДЛЯ УВЕДОМЛЕНИЙ === */
+        /* === ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ УВЕДОМЛЕНИЙ === */
         .notifications-container {
             position: fixed;
             top: 20px;
@@ -237,13 +237,14 @@
             border: 2px solid var(--accent-color);
             border-radius: var(--border-radius);
             padding: 0;
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             transform: translateX(400px);
             opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: all;
             cursor: pointer;
             max-width: 350px;
+            min-width: 300px;
         }
 
         .message-notification.show {
@@ -251,9 +252,14 @@
             opacity: 1;
         }
 
+        .message-notification.hiding {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+
         .message-notification:hover {
             transform: translateX(0) translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
         }
 
         .notification-content {
@@ -288,6 +294,9 @@
             font-size: 14px;
             color: var(--text-primary);
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .notification-message {
@@ -296,6 +305,10 @@
             line-height: 1.3;
             margin-bottom: 4px;
             word-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .notification-time {
@@ -319,6 +332,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: absolute;
+            top: 8px;
+            right: 8px;
         }
 
         .notification-close:hover {
@@ -350,6 +366,7 @@
             
             .message-notification {
                 max-width: none;
+                min-width: auto;
             }
             
             .notification-content {
@@ -1710,6 +1727,9 @@
         </div>
     </div>
 
+    <!-- Контейнер для уведомлений -->
+    <div class="notifications-container" id="notifications-container"></div>
+
     <div id="app">
         <!-- Секция аутентификации -->
         <div id="auth-section" class="section active">
@@ -1932,6 +1952,8 @@
         let messagesListener = null;
         let searchTimeout = null;
         let editingMessageId = null;
+        let notificationsListener = null;
+        let activeNotifications = new Set();
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', function() {
@@ -1970,8 +1992,12 @@
                     await loadUserProfile(user.uid);
                     showMainApp();
                     loadAllUsers();
+                    initNotifications();
                 } else {
                     showAuth();
+                    if (notificationsListener) {
+                        notificationsListener();
+                    }
                 }
             });
         }
@@ -1988,6 +2014,116 @@
                 document.getElementById('app').classList.remove('hidden');
                 showAuth();
             });
+        }
+
+        // ИСПРАВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ
+        function initNotifications() {
+            if (!currentUser) return;
+
+            // Слушаем все чаты пользователя
+            notificationsListener = db.collection('chats')
+                .where('participants', 'array-contains', currentUser.uid)
+                .onSnapshot(async (snapshot) => {
+                    snapshot.docChanges().forEach(async (change) => {
+                        if (change.type === 'modified') {
+                            const chatData = change.doc.data();
+                            const lastMessage = chatData.lastMessage;
+                            const lastMessageTime = chatData.lastMessageTime;
+                            
+                            // Получаем информацию об отправителе
+                            const otherParticipantId = chatData.participants.find(id => id !== currentUser.uid);
+                            if (otherParticipantId) {
+                                const senderData = await getUserData(otherParticipantId);
+                                
+                                // Проверяем, что сообщение новое и не от текущего пользователя
+                                if (lastMessage && lastMessageTime && 
+                                    (!currentChat || currentChat.id !== change.doc.id) &&
+                                    chatData.lastMessageSender !== currentUser.uid) {
+                                    
+                                    // Создаем уведомление
+                                    showNotification(senderData, lastMessage, change.doc.id);
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        function showNotification(sender, message, chatId) {
+            // Проверяем, не открыт ли уже этот чат
+            if (currentChat && currentChat.id === chatId) {
+                return;
+            }
+
+            // Создаем уникальный ID для уведомления
+            const notificationId = 'notification_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const notification = document.createElement('div');
+            notification.className = 'message-notification';
+            notification.id = notificationId;
+            
+            const firstLetter = sender.nickname ? sender.nickname.charAt(0).toUpperCase() : 'U';
+            const isOfficial = sender.email === 'vzorkin2010@gmail.com' || sender.email === 'izbrannoe@gmail.com';
+            
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-avatar">${firstLetter}</div>
+                    <div class="notification-info">
+                        <div class="notification-sender">
+                            ${sender.nickname}
+                            ${isOfficial ? `
+                                <span class="official-checkmark">
+                                    <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="notification-message">${message}</div>
+                        <div class="notification-time">Только что</div>
+                    </div>
+                    <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
+                </div>
+            `;
+
+            const container = document.getElementById('notifications-container');
+            container.appendChild(notification);
+
+            // Добавляем в активные уведомления
+            activeNotifications.add(notificationId);
+
+            // Анимация появления
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // Обработчик клика по уведомлению
+            notification.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('notification-close')) {
+                    openChat(chatId, sender.uid || chatData.participants.find(id => id !== currentUser.uid));
+                    closeNotification(notificationId);
+                }
+            });
+
+            // Автоматическое закрытие через 5 секунд
+            setTimeout(() => {
+                if (activeNotifications.has(notificationId)) {
+                    closeNotification(notificationId);
+                }
+            }, 5000);
+        }
+
+        function closeNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.classList.remove('show');
+                notification.classList.add('hiding');
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                    activeNotifications.delete(notificationId);
+                }, 400);
+            }
         }
 
         function initEventListeners() {
@@ -2182,6 +2318,7 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastMessage: '',
                         lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: '',
                         participantNames: {},
                         participantAvatars: {}
                     });
@@ -2509,7 +2646,8 @@
                                 // Обновляем последнее сообщение в чате
                                 await db.collection('chats').doc(currentChat.id).update({
                                     lastMessage: `Файл: ${file.name}`,
-                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                                    lastMessageSender: currentUser.uid
                                 });
 
                                 // Удаляем временное сообщение
@@ -2561,14 +2699,16 @@
                     // Нет сообщений - очищаем последнее сообщение
                     await db.collection('chats').doc(currentChat.id).update({
                         lastMessage: '',
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: ''
                     });
                 } else {
                     // Обновляем последнее сообщение
                     const lastMessage = messagesQuery.docs[0].data();
                     await db.collection('chats').doc(currentChat.id).update({
                         lastMessage: lastMessage.text ? (lastMessage.text.length > 50 ? lastMessage.text.substring(0, 50) + '...' : lastMessage.text) : `Файл: ${lastMessage.fileName}`,
-                        lastMessageTime: lastMessage.timestamp
+                        lastMessageTime: lastMessage.timestamp,
+                        lastMessageSender: lastMessage.senderId
                     });
                 }
             } catch (error) {
@@ -2617,7 +2757,8 @@
                 if (!messagesQuery.empty && messagesQuery.docs[0].id === messageId) {
                     await db.collection('chats').doc(currentChat.id).update({
                         lastMessage: newText.length > 50 ? newText.substring(0, 50) + '...' : newText,
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: currentUser.uid
                     });
                 }
 
@@ -2651,7 +2792,8 @@
                 // Обновляем последнее сообщение в чате
                 await db.collection('chats').doc(currentChat.id).update({
                     lastMessage: text.length > 50 ? text.substring(0, 50) + '...' : text,
-                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessageSender: currentUser.uid
                 });
 
                 // Очищаем поле ввода и сбрасываем высоту
@@ -2764,6 +2906,7 @@
         async function logout() {
             if (chatsListener) chatsListener();
             if (messagesListener) messagesListener();
+            if (notificationsListener) notificationsListener();
             
             await auth.signOut();
         }
