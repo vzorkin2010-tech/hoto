@@ -432,6 +432,56 @@
             background: #c82333;
             transform: translateY(-2px);
         }
+
+        /* Стили для официальных аккаунтов */
+        .official-badge {
+            position: relative;
+            display: inline-block;
+        }
+
+        .official-checkmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            margin-left: 4px;
+            cursor: help;
+            position: relative;
+        }
+
+        .official-checkmark::after {
+            content: "✓";
+        }
+
+        .official-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            white-space: nowrap;
+            font-size: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .official-checkmark:hover .official-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
     
     <script>
@@ -2100,10 +2150,20 @@
             div.onclick = () => startChatWithUser(userId);
             const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
             
+            // Проверяем, является ли пользователь официальным аккаунтом
+            const isOfficial = user.email === 'vzorkin2010@gmail.com' || user.email === 'izbrannoe@gmail.com';
+            
             div.innerHTML = `
                 <div class="avatar">${firstLetter}</div>
                 <div class="user-info">
-                    <strong>${user.nickname}</strong>
+                    <strong class="${isOfficial ? 'official-badge' : ''}">
+                        ${user.nickname}
+                        ${isOfficial ? `
+                            <span class="official-checkmark">
+                                <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                            </span>
+                        ` : ''}
+                    </strong>
                     <p>@${user.username}</p>
                     ${user.bio ? `<p>${user.bio}</p>` : ''}
                 </div>
@@ -2185,7 +2245,18 @@
             currentChat = { id: chatId, otherUserId: otherUserId };
             currentChatUser = await getUserData(otherUserId);
             
-            document.getElementById('chat-username').textContent = currentChatUser.nickname;
+            // Проверяем, является ли пользователь официальным аккаунтом
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com';
+            
+            document.getElementById('chat-username').innerHTML = `
+                ${currentChatUser.nickname}
+                ${isOfficial ? `
+                    <span class="official-checkmark">
+                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                    </span>
+                ` : ''}
+            `;
+            
             const chatAvatar = document.getElementById('chat-avatar');
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
             chatAvatar.className = 'avatar';
@@ -2215,10 +2286,20 @@
             const modal = document.getElementById('user-profile-modal');
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
             
+            // Проверяем, является ли пользователь официальным аккаунтом
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com';
+            
             document.getElementById('modal-avatar').className = 'avatar-large';
             document.getElementById('modal-avatar').style.background = '';
             document.getElementById('modal-avatar').textContent = firstLetter;
-            document.getElementById('modal-nickname').textContent = currentChatUser.nickname || 'Неизвестно';
+            document.getElementById('modal-nickname').innerHTML = `
+                ${currentChatUser.nickname || 'Неизвестно'}
+                ${isOfficial ? `
+                    <span class="official-checkmark">
+                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                    </span>
+                ` : ''}
+            `;
             document.getElementById('modal-username').textContent = '@' + (currentChatUser.username || 'unknown');
             
             const statusElement = document.getElementById('modal-status');
