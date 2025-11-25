@@ -6,68 +6,431 @@
     
     <!-- ЗАЩИТА ОТ КОПИРОВАНИЯ И ПРОСМОТРА КОДА -->
     <style>
-        /* ... существующие стили защиты ... */
+        /* Запрет выделения текста */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
         
-        /* СТИЛИ ДЛЯ ИЗБРАННОГО */
-        .favorite-message {
-            background: var(--secondary-bg);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid #ffd700;
+        /* Разрешить выделение для полей ввода */
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        /* Скрыть правый клик контекстное меню */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Запрет перетаскивания изображений */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+
+        /* КРАСИВЫЙ КАСТОМНЫЙ СКРОЛЛБАР */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
             transition: var(--transition);
         }
 
-        .favorite-message:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            border-left-color: #ffc107;
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
-        .favorite-message-header {
+        /* Для Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        /* Для контейнеров с сообщениями - более тонкий скролл */
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        /* СТИЛИ ДЛЯ ФАЙЛОВ */
+        .file-message {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            max-width: 300px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .message.sent .file-message {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .file-message:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .file-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
             font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .file-upload-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .upload-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: var(--transition);
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: var(--text-secondary);
         }
 
-        .favorite-message-content {
-            font-size: 15px;
-            line-height: 1.4;
+        .upload-button:hover {
+            background: var(--secondary-bg);
+            color: var(--accent-color);
+        }
+
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .image-preview:hover {
+            transform: scale(1.05);
+        }
+
+        .message-input-wrapper {
+            position: relative;
+        }
+
+        .paste-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--border-radius);
+            z-index: 10;
+            color: white;
+            font-weight: bold;
+        }
+
+        .paste-overlay.active {
+            display: flex;
+        }
+
+        /* === СТИЛИ ДЛЯ УВЕДОМЛЕНИЙ === */
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+            pointer-events: none;
+        }
+
+        .message-notification {
+            background: var(--primary-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: 0;
+            box-shadow: var(--shadow);
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: all;
+            cursor: pointer;
+            max-width: 350px;
+        }
+
+        .message-notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .message-notification:hover {
+            transform: translateX(0) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            position: relative;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .notification-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-sender {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.3;
+            margin-bottom: 4px;
             word-wrap: break-word;
         }
 
-        .favorite-message-file {
+        .notification-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            margin-top: 8px;
+            justify-content: center;
         }
 
-        .favorite-empty-state {
+        .notification-close:hover {
+            background: var(--secondary-bg);
+            color: var(--error-color);
+        }
+
+        /* Badge для навигации */
+        .nav-badge {
+            background: var(--error-color);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+            min-width: 18px;
             text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
         }
 
-        .favorite-empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+        /* Адаптация для мобильных */
+        @media (max-width: 768px) {
+            .notifications-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            
+            .message-notification {
+                max-width: none;
+            }
+            
+            .notification-content {
+                padding: 12px;
+            }
         }
 
-        .message-action-btn.favorite {
-            color: #ffd700;
+        /* Анимация для badge */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
-        .message-action-btn.favorite.active {
-            color: #ffc107;
-            text-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+        .nav-badge {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        /* Стили для бана */
+        .banned-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-bg);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .banned-container.active {
+            display: flex;
+        }
+
+        .banned-message {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--error-color);
+        }
+
+        .banned-message h2 {
+            color: var(--error-color);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .banned-message p {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .ban-reason {
+            background: rgba(220, 53, 69, 0.1);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+            border-left: 4px solid var(--error-color);
+        }
+
+        .logout-btn {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 20px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
         }
     </style>
     
@@ -619,8 +982,7 @@
         }
 
         .chats-list, 
-        .users-list,
-        .favorites-list {
+        .users-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -630,27 +992,23 @@
         }
 
         .chats-list::-webkit-scrollbar,
-        .users-list::-webkit-scrollbar,
-        .favorites-list::-webkit-scrollbar {
+        .users-list::-webkit-scrollbar {
             width: 6px;
         }
 
         .chats-list::-webkit-scrollbar-thumb,
-        .users-list::-webkit-scrollbar-thumb,
-        .favorites-list::-webkit-scrollbar-thumb {
+        .users-list::-webkit-scrollbar-thumb {
             background: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
         }
 
         [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb,
-        [data-theme="dark"] .favorites-list::-webkit-scrollbar-thumb {
+        [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
         }
 
         .chats-list::-webkit-scrollbar-thumb:hover,
-        .users-list::-webkit-scrollbar-thumb:hover,
-        .favorites-list::-webkit-scrollbar-thumb:hover {
+        .users-list::-webkit-scrollbar-thumb:hover {
             background: var(--accent-color);
         }
 
@@ -870,15 +1228,6 @@
 
         .message-action-btn.edit {
             color: var(--accent-color);
-        }
-
-        .message-action-btn.favorite {
-            color: #ffd700;
-        }
-
-        .message-action-btn.favorite.active {
-            color: #ffc107;
-            text-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
         }
 
         .message-time {
@@ -1372,9 +1721,6 @@
                         <button onclick="showSection('chats')" class="nav-btn active">
                             💬 Мои чаты
                         </button>
-                        <button onclick="showSection('favorites')" class="nav-btn">
-                            ⭐ Избранное
-                        </button>
                         <button onclick="showSection('search')" class="nav-btn">
                             🔍 Поиск
                         </button>
@@ -1393,20 +1739,6 @@
                         </div>
                         <div id="chats-list" class="chats-list">
                             <p class="text-center">Загрузка пользователей...</p>
-                        </div>
-                    </div>
-
-                    <!-- Секция избранного -->
-                    <div id="favorites-section" class="content-section">
-                        <div class="section-header">
-                            <h3>Избранное</h3>
-                        </div>
-                        <div id="favorites-list" class="favorites-list">
-                            <div class="favorite-empty-state">
-                                <div class="icon">⭐</div>
-                                <p>Здесь будут сохраняться важные сообщения</p>
-                                <p>Нажмите на звездочку в сообщении, чтобы добавить его в избранное</p>
-                            </div>
                         </div>
                     </div>
 
@@ -1548,7 +1880,6 @@
         let usersCache = new Map();
         let chatsListener = null;
         let messagesListener = null;
-        let favoritesListener = null;
         let searchTimeout = null;
         let editingMessageId = null;
 
@@ -1693,110 +2024,6 @@
                     e.target.value = '';
                 }
             });
-        }
-
-        // ПРОСТАЯ СИСТЕМА ИЗБРАННОГО
-        async function toggleFavorite(messageId, messageData) {
-            if (!currentUser) return;
-
-            try {
-                // Просто сохраняем сообщение в коллекцию избранного
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('favorites').doc(messageId).set({
-                        ...messageData,
-                        favoriteDate: firebase.firestore.FieldValue.serverTimestamp(),
-                        originalChatId: currentChat.id,
-                        originalChatUserId: currentChat.otherUserId
-                    });
-                
-                return true;
-            } catch (error) {
-                console.error('Ошибка добавления в избранное:', error);
-                return false;
-            }
-        }
-
-        async function loadFavorites() {
-            if (!currentUser) return;
-
-            const favoritesContainer = document.getElementById('favorites-list');
-            
-            try {
-                const favoritesSnapshot = await db.collection('users').doc(currentUser.uid)
-                    .collection('favorites')
-                    .orderBy('favoriteDate', 'desc')
-                    .get();
-
-                favoritesContainer.innerHTML = '';
-
-                if (favoritesSnapshot.empty) {
-                    favoritesContainer.innerHTML = `
-                        <div class="favorite-empty-state">
-                            <div class="icon">⭐</div>
-                            <p>Здесь будут сохраняться важные сообщения</p>
-                            <p>Нажмите на звездочку в сообщении, чтобы добавить его в избранное</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                for (const doc of favoritesSnapshot.docs) {
-                    const favorite = doc.data();
-                    const favoriteElement = await createFavoriteElement(favorite, doc.id);
-                    favoritesContainer.appendChild(favoriteElement);
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки избранного:', error);
-                favoritesContainer.innerHTML = '<p class="text-center">Ошибка загрузки избранного</p>';
-            }
-        }
-
-        async function createFavoriteElement(favorite, favoriteId) {
-            const div = document.createElement('div');
-            div.className = 'favorite-message';
-
-            // Получаем информацию о пользователе
-            let userName = 'Неизвестный пользователь';
-            try {
-                const userDoc = await db.collection('users').doc(favorite.senderId).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    userName = userData.nickname || userData.username;
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки пользователя:', error);
-            }
-
-            const time = favorite.timestamp ? formatTime(favorite.timestamp.toDate()) : 'Неизвестно';
-            const favoriteDate = favorite.favoriteDate ? formatTime(favorite.favoriteDate.toDate()) : '';
-
-            let contentHTML = '';
-            if (favorite.type === 'file') {
-                contentHTML = `
-                    <div class="favorite-message-file">
-                        <div class="file-icon">${getFileIcon(favorite.fileType)}</div>
-                        <div class="file-info">
-                            <div class="file-name">${favorite.fileName}</div>
-                            <div class="file-size">${formatFileSize(favorite.fileSize)}</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                contentHTML = `<div class="favorite-message-content">${favorite.text || ''}</div>`;
-            }
-
-            div.innerHTML = `
-                <div class="favorite-message-header">
-                    <div>
-                        <strong>${userName}</strong>
-                        <span> • ${time}</span>
-                    </div>
-                    <small>Добавлено: ${favoriteDate}</small>
-                </div>
-                ${contentHTML}
-            `;
-
-            return div;
         }
 
         // ОСНОВНЫЕ ФУНКЦИИ МЕССЕНДЖЕРА
@@ -2075,9 +2302,6 @@
                         </div>
                     </div>
                     <div class="message-actions">
-                        <button class="message-action-btn favorite" onclick="addToFavorites('${messageId}')">
-                            ☆
-                        </button>
                         <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
                     </div>
                     <div class="message-time">${time}</div>
@@ -2087,9 +2311,6 @@
                 div.innerHTML = `
                     <div class="message-text">${message.text || ''}</div>
                     <div class="message-actions">
-                        <button class="message-action-btn favorite" onclick="addToFavorites('${messageId}')">
-                            ☆
-                        </button>
                         <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
                         <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
                     </div>
@@ -2098,32 +2319,6 @@
             }
             
             return div;
-        }
-
-        // ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ В ИЗБРАННОЕ
-        async function addToFavorites(messageId) {
-            if (!currentChat) return;
-
-            try {
-                // Получаем данные сообщения
-                const messageDoc = await db.collection('chats').doc(currentChat.id)
-                    .collection('messages').doc(messageId).get();
-                
-                if (!messageDoc.exists) {
-                    alert('Сообщение не найдено');
-                    return;
-                }
-
-                const messageData = messageDoc.data();
-                const success = await toggleFavorite(messageId, messageData);
-
-                if (success) {
-                    alert('Сообщение добавлено в избранное!');
-                }
-            } catch (error) {
-                console.error('Ошибка добавления в избранное:', error);
-                alert('Ошибка: ' + error.message);
-            }
         }
 
         function getFileIcon(fileType) {
@@ -2579,11 +2774,6 @@
             if (sectionName !== 'chat') {
                 const navBtn = document.querySelector(`.nav-btn[onclick="showSection('${sectionName}')"]`);
                 if (navBtn) navBtn.classList.add('active');
-            }
-
-            // Загружаем избранное при переходе на вкладку
-            if (sectionName === 'favorites') {
-                loadFavorites();
             }
         }
 
