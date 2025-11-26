@@ -1808,7 +1808,7 @@
                             <h3>Мои чаты</h3>
                         </div>
                         <div id="chats-list" class="chats-list">
-                            <p class="text-center">Загрузка пользователей...</p>
+                            <p class="text-center">Загрузка чатов...</p>
                         </div>
                     </div>
 
@@ -1995,7 +1995,7 @@
                     currentUser = user;
                     await loadUserProfile(user.uid);
                     showMainApp();
-                    loadAllUsers();
+                    loadChats(); // Загружаем чаты вместо всех пользователей
                     initNotifications();
                 } else {
                     showAuth();
@@ -2318,31 +2318,87 @@
             });
         }
 
-        // ОСНОВНЫЕ ФУНКЦИИ МЕССЕНДЖЕРА
-        async function loadAllUsers() {
+        // НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ЧАТОВ (только пользователи с которыми есть общение)
+        async function loadChats() {
             try {
-                const usersQuery = await db.collection('users').get();
                 const chatsContainer = document.getElementById('chats-list');
-                chatsContainer.innerHTML = '';
+                chatsContainer.innerHTML = '<p class="text-center">Загрузка чатов...</p>';
 
-                if (usersQuery.empty) {
-                    chatsContainer.innerHTML = '<p class="text-center">Нет пользователей</p>';
+                // Получаем все чаты текущего пользователя
+                const chatsQuery = await db.collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .orderBy('lastMessageTime', 'desc')
+                    .get();
+
+                if (chatsQuery.empty) {
+                    chatsContainer.innerHTML = '<p class="text-center">У вас пока нет чатов</p>';
                     return;
                 }
 
-                usersQuery.forEach(doc => {
-                    const user = doc.data();
-                    if (doc.id !== currentUser.uid && !user.banned) {
-                        const userElement = createUserElement(user, doc.id);
-                        chatsContainer.appendChild(userElement);
+                chatsContainer.innerHTML = '';
+                let hasActiveChats = false;
+
+                // Обрабатываем каждый чат
+                for (const doc of chatsQuery.docs) {
+                    const chatData = doc.data();
+                    
+                    // Находим ID другого участника чата
+                    const otherParticipantId = chatData.participants.find(id => id !== currentUser.uid);
+                    
+                    if (otherParticipantId) {
+                        // Получаем данные пользователя
+                        const userData = await getUserData(otherParticipantId);
+                        
+                        // Показываем чат только если есть сообщения
+                        if (chatData.lastMessage) {
+                            const chatElement = createChatElement(userData, doc.id, chatData);
+                            chatsContainer.appendChild(chatElement);
+                            hasActiveChats = true;
+                        }
                     }
-                });
+                }
+
+                if (!hasActiveChats) {
+                    chatsContainer.innerHTML = '<p class="text-center">У вас пока нет активных чатов</p>';
+                }
+
             } catch (error) {
-                console.error('Ошибка загрузки пользователей:', error);
-                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
+                console.error('Ошибка загрузки чатов:', error);
+                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки чатов</p>';
             }
         }
 
+        // Функция создания элемента чата
+        function createChatElement(user, chatId, chatData) {
+            const div = document.createElement('div');
+            div.className = 'chat-item';
+            div.onclick = () => openChat(chatId, user.uid || user.id);
+            
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            const isOfficial = user.email === 'vzorkin2010@gmail.com' || user.email === 'izbrannoe@gmail.com';
+            
+            // Форматируем время последнего сообщения
+            const lastMessageTime = chatData.lastMessageTime ? formatTime(chatData.lastMessageTime.toDate()) : 'Нет сообщений';
+            
+            div.innerHTML = `
+                <div class="avatar">${firstLetter}</div>
+                <div class="chat-info">
+                    <strong class="${isOfficial ? 'official-badge' : ''}">
+                        ${user.nickname}
+                        ${isOfficial ? `
+                            <span class="official-checkmark">
+                                <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                            </span>
+                        ` : ''}
+                    </strong>
+                    <p>${chatData.lastMessage || 'Нет сообщений'}</p>
+                    <p class="message-time">${lastMessageTime}</p>
+                </div>
+            `;
+            return div;
+        }
+
+        // ПОИСК ВСЕХ ПОЛЬЗОВАТЕЛЕЙ (только в поиске)
         async function searchUsers() {
             const query = document.getElementById('search-input').value.trim();
             const resultsContainer = document.getElementById('search-results');
@@ -2358,7 +2414,7 @@
                 const usersQuery = await db.collection('users')
                     .where('username', '>=', query)
                     .where('username', '<=', query + '\uf8ff')
-                    .limit(10)
+                    .limit(20)
                     .get();
 
                 if (usersQuery.empty) {
@@ -2371,6 +2427,7 @@
                 
                 usersQuery.forEach(doc => {
                     const user = doc.data();
+                    // Показываем всех пользователей кроме текущего и забаненных
                     if (doc.id !== currentUser.uid && !user.banned) {
                         const userElement = createUserElement(user, doc.id);
                         resultsContainer.appendChild(userElement);
@@ -2386,6 +2443,7 @@
             }
         }
 
+        // Функция создания элемента пользователя для поиска
         function createUserElement(user, userId) {
             const div = document.createElement('div');
             div.className = 'user-item';
@@ -2413,6 +2471,7 @@
             return div;
         }
 
+        // НАЧАТЬ ЧАТ С ПОЛЬЗОВАТЕЛЕМ (создает новый чат или открывает существующий)
         async function startChatWithUser(userId) {
             try {
                 let chatId = await findExistingChat(userId);
@@ -2465,6 +2524,7 @@
             }
         }
 
+        // ПОИСК СУЩЕСТВУЮЩЕГО ЧАТА
         async function findExistingChat(userId) {
             try {
                 const chatQuery = await db.collection('chats')
@@ -3000,6 +3060,11 @@
                 
                 const navBtn = document.querySelector(`.nav-btn[onclick="showSection('${sectionName}')"]`);
                 if (navBtn) navBtn.classList.add('active');
+                
+                // Если переходим в чаты, обновляем список
+                if (sectionName === 'chats') {
+                    loadChats();
+                }
             } else {
                 // Когда пользователь входит в чат
                 console.log('🚀 ВХОД В ЧАТ, isUserInChat = true');
