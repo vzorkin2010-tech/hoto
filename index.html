@@ -2643,6 +2643,9 @@
             
             const time = message.timestamp ? formatTime(message.timestamp.toDate()) : 'только что';
             
+            // Проверяем, принадлежит ли сообщение текущему пользователю
+            const isOwnMessage = message.senderId === currentUser.uid;
+            
             if (isEditing) {
                 div.innerHTML = `
                     <input type="text" class="edit-input" value="${message.text}" id="edit-input-${messageId}">
@@ -2653,7 +2656,7 @@
                     <div class="message-time">${time}</div>
                 `;
             } else if (message.type === 'file') {
-                // Сообщение с файлом
+                // Сообщение с файлом - показываем кнопки действий только для своих сообщений
                 div.innerHTML = `
                     <div class="file-message" onclick="openFile('${message.fileURL}', '${message.fileName}')">
                         <div class="file-icon">${getFileIcon(message.fileType)}</div>
@@ -2662,19 +2665,23 @@
                             <div class="file-size">${formatFileSize(message.fileSize)}</div>
                         </div>
                     </div>
-                    <div class="message-actions">
-                        <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
-                    </div>
+                    ${isOwnMessage ? `
+                        <div class="message-actions">
+                            <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
+                        </div>
+                    ` : ''}
                     <div class="message-time">${time}</div>
                 `;
             } else {
-                // Текстовое сообщение
+                // Текстовое сообщение - показываем кнопки действий только для своих сообщений
                 div.innerHTML = `
                     <div class="message-text">${message.text || ''}</div>
-                    <div class="message-actions">
-                        <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
-                        <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
-                    </div>
+                    ${isOwnMessage ? `
+                        <div class="message-actions">
+                            <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
+                            <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
+                        </div>
+                    ` : ''}
                     <div class="message-time">${time}</div>
                 `;
             }
@@ -2823,13 +2830,31 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // УДАЛЕНИЕ СООБЩЕНИЯ
+        // ИСПРАВЛЕННОЕ УДАЛЕНИЕ СООБЩЕНИЯ - ТОЛЬКО СВОИ СООБЩЕНИЯ
         async function deleteMessage(messageId) {
-            if (!currentChat || !confirm('Вы уверены, что хотите удалить это сообщение?')) {
-                return;
-            }
-
+            if (!currentChat) return;
+            
             try {
+                // Сначала получаем сообщение чтобы проверить, принадлежит ли оно текущему пользователю
+                const messageDoc = await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get();
+                
+                if (!messageDoc.exists) {
+                    alert('Сообщение не найдено');
+                    return;
+                }
+                
+                const messageData = messageDoc.data();
+                
+                // Проверяем, принадлежит ли сообщение текущему пользователю
+                if (messageData.senderId !== currentUser.uid) {
+                    alert('Вы можете удалять только свои сообщения!');
+                    return;
+                }
+                
+                if (!confirm('Вы уверены, что хотите удалить это сообщение?')) {
+                    return;
+                }
+
                 await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).delete();
                 
                 // Обновляем последнее сообщение в чате если нужно
@@ -2860,19 +2885,36 @@
             }
         }
 
-        // РЕДАКТИРОВАНИЕ СООБЩЕНИЯ
+        // ИСПРАВЛЕННОЕ РЕДАКТИРОВАНИЕ СООБЩЕНИЯ - ТОЛЬКО СВОИ СООБЩЕНИЯ
         function editMessage(messageId, currentText) {
-            editingMessageId = messageId;
-            loadMessages(currentChat.id);
-            
-            // Фокус на поле ввода после рендера
-            setTimeout(() => {
-                const editInput = document.getElementById(`edit-input-${messageId}`);
-                if (editInput) {
-                    editInput.focus();
-                    editInput.select();
-                }
-            }, 100);
+            // Проверяем, принадлежит ли сообщение текущему пользователю
+            // Для этого нужно получить сообщение из базы данных
+            db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const messageData = doc.data();
+                        if (messageData.senderId !== currentUser.uid) {
+                            alert('Вы можете редактировать только свои сообщения!');
+                            return;
+                        }
+                        
+                        // Если сообщение принадлежит пользователю, разрешаем редактирование
+                        editingMessageId = messageId;
+                        loadMessages(currentChat.id);
+                        
+                        // Фокус на поле ввода после рендера
+                        setTimeout(() => {
+                            const editInput = document.getElementById(`edit-input-${messageId}`);
+                            if (editInput) {
+                                editInput.focus();
+                                editInput.select();
+                            }
+                        }, 100);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Ошибка проверки сообщения:', error);
+                });
         }
 
         async function saveMessageEdit(messageId) {
@@ -2885,6 +2927,13 @@
             }
 
             try {
+                // Дополнительная проверка на принадлежность сообщения
+                const messageDoc = await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get();
+                if (messageDoc.exists && messageDoc.data().senderId !== currentUser.uid) {
+                    alert('Вы можете редактировать только свои сообщения!');
+                    return;
+                }
+
                 await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).update({
                     text: newText,
                     edited: true,
@@ -3180,7 +3229,6 @@
             
             return { nickname: 'Неизвестный', username: 'unknown' };
         }
-
     </script>
 </body>
 </html>
