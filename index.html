@@ -2134,7 +2134,8 @@
             notification.dataset.chatId = chatId;
             
             const firstLetter = sender.nickname ? sender.nickname.charAt(0).toUpperCase() : 'U';
-            const isOfficial = sender.email === 'vzorkin2010@gmail.com' || sender.email === 'izbrannoe@gmail.com';
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
+            const isOfficial = sender.email === 'vzorkin2010@gmail.com' || sender.email === 'izbrannoe@gmail.com' || sender.email === 'support@gmail.com';
             
             notification.innerHTML = `
                 <div class="notification-content">
@@ -2393,7 +2394,8 @@
             const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            const isOfficial = user.email === 'vzorkin2010@gmail.com' || user.email === 'izbrannoe@gmail.com';
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
+            const isOfficial = user.email === 'vzorkin2010@gmail.com' || user.email === 'izbrannoe@gmail.com' || user.email === 'support@gmail.com';
             
             div.innerHTML = `
                 <div class="avatar">${firstLetter}</div>
@@ -2511,7 +2513,8 @@
             }
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com';
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com' || currentChatUser.email === 'support@gmail.com';
             
             document.getElementById('chat-username').innerHTML = `
                 ${currentChatUser.nickname}
@@ -2552,7 +2555,8 @@
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com';
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || currentChatUser.email === 'izbrannoe@gmail.com' || currentChatUser.email === 'support@gmail.com';
             
             document.getElementById('modal-avatar').className = 'avatar-large';
             document.getElementById('modal-avatar').style.background = '';
