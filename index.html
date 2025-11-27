@@ -842,6 +842,29 @@
             font-size: 2.5rem;
             margin-bottom: 10px;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--shadow);
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .auth-forms {
@@ -909,9 +932,36 @@
             padding-right: calc(var(--mobile-padding) + var(--safe-area-inset-right));
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .app-title {
             font-size: 1.3rem;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid var(--accent-color);
+        }
+
+        .app-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .header-right {
@@ -1913,7 +1963,12 @@
         <div id="auth-section" class="section active">
             <div class="auth-container">
                 <div class="logo">
-                    <h1>Hoto</h1>
+                    <h1>
+                        <div class="logo-icon">
+                            <img src="https://media.discordapp.net/attachments/1285628611449196588/1443631123878904002/image.png?ex=6929c5c1&is=69287441&hm=a2cc46febcb8324ff29e9e0ca86cb9eea2bb447b1b701d83dc97436129126561&=&format=webp&quality=lossless" alt="Hoto Logo">
+                        </div>
+                        Hoto
+                    </h1>
                     <p>Мессенджер нового поколения</p>
                 </div>
                 
@@ -1949,7 +2004,12 @@
             <!-- Хедер -->
             <header class="header">
                 <div class="header-left">
-                    <h2 class="app-title">Hoto</h2>
+                    <h2 class="app-title">
+                        <div class="app-logo">
+                            <img src="https://media.discordapp.net/attachments/1285628611449196588/1443631123878904002/image.png?ex=6929c5c1&is=69287441&hm=a2cc46febcb8324ff29e9e0ca86cb9eea2bb447b1b701d83dc97436129126561&=&format=webp&quality=lossless" alt="Hoto Logo">
+                        </div>
+                        Hoto
+                    </h2>
                 </div>
                 <div class="header-right">
                     <button id="theme-toggle" class="icon-btn" title="Сменить тему">🌙</button>
