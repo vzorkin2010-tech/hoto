@@ -671,11 +671,6 @@
             color: white;
         }
 
-        .call-btn.speaker {
-            background: var(--accent-color);
-            color: white;
-        }
-
         .call-info {
             text-align: center;
             margin-bottom: 30px;
@@ -954,69 +949,6 @@
             font-size: 10px;
         }
 
-        /* Настройки устройств */
-        .device-settings {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: var(--border-radius);
-            padding: 15px;
-            color: white;
-            z-index: 1000;
-            display: none;
-        }
-
-        .device-settings.active {
-            display: block;
-        }
-
-        .device-setting {
-            margin-bottom: 15px;
-        }
-
-        .device-setting:last-child {
-            margin-bottom: 0;
-        }
-
-        .device-setting label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .device-select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            cursor: pointer;
-            z-index: 1000;
-            transition: var(--transition);
-        }
-
-        .settings-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.1);
-        }
-
         /* Адаптация для мобильных */
         @media (max-width: 768px) {
             .video-wrapper.local-video {
@@ -1063,13 +995,6 @@
 
             .join-call-btn {
                 width: 100%;
-            }
-
-            .device-settings {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: calc(100% - 20px);
             }
         }
     </style>
@@ -2542,25 +2467,6 @@
 
     <!-- Контейнер для звонков -->
     <div id="call-container" class="call-container">
-        <!-- Кнопка настроек устройств -->
-        <button class="settings-btn" onclick="toggleDeviceSettings()">⚙️</button>
-        
-        <!-- Настройки устройств -->
-        <div id="device-settings" class="device-settings">
-            <div class="device-setting">
-                <label for="audio-input">Микрофон:</label>
-                <select id="audio-input" class="device-select"></select>
-            </div>
-            <div class="device-setting">
-                <label for="audio-output">Динамики:</label>
-                <select id="audio-output" class="device-select"></select>
-            </div>
-            <div class="device-setting">
-                <label for="video-input">Камера:</label>
-                <select id="video-input" class="device-select"></select>
-            </div>
-        </div>
-        
         <div class="call-info">
             <h3 id="call-status">Звонок...</h3>
             <p id="call-user-name">Пользователь</p>
@@ -2584,7 +2490,6 @@
         
         <div class="call-controls">
             <button class="call-btn mute" id="mute-btn" title="Отключить микрофон">🎤</button>
-            <button class="call-btn speaker" id="speaker-btn" title="Переключить динамик">🔊</button>
             <button class="call-btn video" id="video-btn" title="Отключить видео">📹</button>
             <button class="call-btn end-call" id="end-call-btn" title="Завершить звонок">📞</button>
         </div>
@@ -2896,19 +2801,15 @@
         let callStartTime = null;
         let isMuted = false;
         let isVideoOff = false;
-        let isSpeakerOn = true;
         let callType = null; // 'video' или 'voice'
         let activeCallListener = null;
         let currentActiveCall = null;
-        let callDocListener = null;
-        let iceCandidateListener = null;
 
         // Конфигурация STUN/TURN серверов для WebRTC
         const pcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                { urls: 'stun:stun1.l.google.com:19302' }
             ]
         };
 
@@ -3139,14 +3040,6 @@
                 activeCallListener();
                 activeCallListener = null;
             }
-            if (callDocListener) {
-                callDocListener();
-                callDocListener = null;
-            }
-            if (iceCandidateListener) {
-                iceCandidateListener();
-                iceCandidateListener = null;
-            }
         }
 
         function showIncomingCall(callData, callId) {
@@ -3196,6 +3089,7 @@
         function hideIncomingCall() {
             const notification = document.getElementById('call-notification');
             notification.classList.remove('active');
+            currentCall = null;
         }
 
         function showActiveCallBanner(callData, callId) {
@@ -3287,12 +3181,6 @@
                 // Начинаем захват медиа
                 await startLocalStream(type === 'video');
 
-                // Создаем peer connection
-                await createPeerConnection();
-
-                // Слушаем изменения в документе звонка
-                setupCallDocListener(callRef.id);
-
                 // Ждем ответа
                 await waitForCallAnswer(callRef.id);
 
@@ -3301,70 +3189,6 @@
                 alert('Ошибка начала звонка: ' + error.message);
                 endCall();
             }
-        }
-
-        function setupCallDocListener(callId) {
-            callDocListener = db.collection('calls').doc(callId)
-                .onSnapshot(async (doc) => {
-                    if (!doc.exists) return;
-                    
-                    const callData = doc.data();
-                    
-                    // Если звонок завершен другим пользователем
-                    if (callData.status === 'ended' && currentCall) {
-                        alert('Собеседник завершил звонок');
-                        endCall();
-                        return;
-                    }
-                    
-                    // Обработка offer от инициатора
-                    if (callData.offer && !peerConnection.currentRemoteDescription && currentCall.from !== currentUser.uid) {
-                        try {
-                            await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
-                            const answer = await peerConnection.createAnswer();
-                            await peerConnection.setLocalDescription(answer);
-                            
-                            // Отправляем answer
-                            await db.collection('calls').doc(callId).update({
-                                answer: answer,
-                                answerCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        } catch (error) {
-                            console.error('Ошибка обработки offer:', error);
-                        }
-                    }
-                    
-                    // Обработка answer от отвечающего
-                    if (callData.answer && peerConnection.signalingState === 'have-local-offer') {
-                        try {
-                            await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.answer));
-                        } catch (error) {
-                            console.error('Ошибка обработки answer:', error);
-                        }
-                    }
-                });
-
-            // Слушаем ICE кандидаты
-            setupICECandidateListener(callId);
-        }
-
-        function setupICECandidateListener(callId) {
-            iceCandidateListener = db.collection('calls').doc(callId).collection('iceCandidates')
-                .onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach(async (change) => {
-                        if (change.type === 'added') {
-                            const candidateData = change.doc.data();
-                            // Добавляем только кандидаты от другого пользователя
-                            if (candidateData.from !== currentUser.uid && peerConnection.remoteDescription) {
-                                try {
-                                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData.candidate));
-                                } catch (error) {
-                                    console.error('Ошибка добавления ICE кандидата:', error);
-                                }
-                            }
-                        }
-                    });
-                });
         }
 
         async function waitForCallAnswer(callId) {
@@ -3397,7 +3221,6 @@
         async function acceptCall(callId) {
             try {
                 hideIncomingCall();
-                hideActiveCallBanner();
 
                 // Обновляем статус звонка
                 await db.collection('calls').doc(callId).update({
@@ -3418,12 +3241,8 @@
                 // Начинаем захват медиа
                 await startLocalStream(callData.type === 'video');
 
-                // Создаем peer connection
+                // Начинаем установку WebRTC соединения
                 await createPeerConnection();
-
-                // Слушаем изменения в документе звонка
-                setupCallDocListener(callId);
-
                 startCallTimer();
 
             } catch (error) {
@@ -3453,15 +3272,10 @@
         async function startLocalStream(enableVideo = true) {
             try {
                 const constraints = {
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    },
+                    audio: true,
                     video: enableVideo ? {
                         width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 }
+                        height: { ideal: 720 }
                     } : false
                 };
 
@@ -3469,133 +3283,17 @@
                 const localVideo = document.getElementById('local-video');
                 localVideo.srcObject = localStream;
 
-                // Обновляем список устройств
-                await updateDeviceLists();
+                // Добавляем треки в peer connection если он создан
+                if (peerConnection) {
+                    localStream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, localStream);
+                    });
+                }
 
             } catch (error) {
                 console.error('Ошибка доступа к медиаустройствам:', error);
                 throw new Error('Не удалось получить доступ к камере/микрофону');
             }
-        }
-
-        async function updateDeviceLists() {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                
-                const audioInputSelect = document.getElementById('audio-input');
-                const audioOutputSelect = document.getElementById('audio-output');
-                const videoInputSelect = document.getElementById('video-input');
-                
-                // Очищаем списки
-                audioInputSelect.innerHTML = '';
-                audioOutputSelect.innerHTML = '';
-                videoInputSelect.innerHTML = '';
-                
-                // Заполняем списки устройств
-                devices.forEach(device => {
-                    const option = document.createElement('option');
-                    option.value = device.deviceId;
-                    option.text = device.label || `Устройство ${device.kind}`;
-                    
-                    if (device.kind === 'audioinput') {
-                        audioInputSelect.appendChild(option);
-                    } else if (device.kind === 'audiooutput') {
-                        audioOutputSelect.appendChild(option);
-                    } else if (device.kind === 'videoinput') {
-                        videoInputSelect.appendChild(option);
-                    }
-                });
-                
-                // Настраиваем обработчики изменений
-                audioInputSelect.onchange = () => changeAudioInput(audioInputSelect.value);
-                audioOutputSelect.onchange = () => changeAudioOutput(audioOutputSelect.value);
-                videoInputSelect.onchange = () => changeVideoInput(videoInputSelect.value);
-                
-            } catch (error) {
-                console.error('Ошибка получения списка устройств:', error);
-            }
-        }
-
-        async function changeAudioInput(deviceId) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: { deviceId: { exact: deviceId } },
-                    video: false
-                });
-                
-                const audioTrack = stream.getAudioTracks()[0];
-                const currentAudioTrack = localStream.getAudioTracks()[0];
-                
-                if (currentAudioTrack) {
-                    localStream.removeTrack(currentAudioTrack);
-                }
-                
-                localStream.addTrack(audioTrack);
-                
-                // Обновляем peer connection
-                if (peerConnection) {
-                    const sender = peerConnection.getSenders().find(s => 
-                        s.track && s.track.kind === 'audio'
-                    );
-                    if (sender) {
-                        await sender.replaceTrack(audioTrack);
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Ошибка смены микрофона:', error);
-            }
-        }
-
-        async function changeAudioOutput(deviceId) {
-            try {
-                const remoteVideo = document.getElementById('remote-video');
-                if (remoteVideo.setSinkId) {
-                    await remoteVideo.setSinkId(deviceId);
-                }
-            } catch (error) {
-                console.error('Ошибка смены динамиков:', error);
-            }
-        }
-
-        async function changeVideoInput(deviceId) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: false,
-                    video: { deviceId: { exact: deviceId } }
-                });
-                
-                const videoTrack = stream.getVideoTracks()[0];
-                const currentVideoTrack = localStream.getVideoTracks()[0];
-                
-                if (currentVideoTrack) {
-                    localStream.removeTrack(currentVideoTrack);
-                }
-                
-                localStream.addTrack(videoTrack);
-                
-                // Обновляем peer connection
-                if (peerConnection) {
-                    const sender = peerConnection.getSenders().find(s => 
-                        s.track && s.track.kind === 'video'
-                    );
-                    if (sender) {
-                        await sender.replaceTrack(videoTrack);
-                    }
-                }
-                
-                // Обновляем локальное видео
-                const localVideo = document.getElementById('local-video');
-                localVideo.srcObject = localStream;
-                
-            } catch (error) {
-                console.error('Ошибка смены камеры:', error);
-            }
-        }
-
-        function toggleDeviceSettings() {
-            const settings = document.getElementById('device-settings');
-            settings.classList.toggle('active');
         }
 
         async function createPeerConnection() {
@@ -3604,7 +3302,6 @@
 
                 // Обработчик входящих потоков
                 peerConnection.ontrack = (event) => {
-                    console.log('Получен удаленный поток');
                     const remoteVideo = document.getElementById('remote-video');
                     if (event.streams && event.streams[0]) {
                         remoteVideo.srcObject = event.streams[0];
@@ -3614,21 +3311,9 @@
 
                 // Обработчик ICE кандидатов
                 peerConnection.onicecandidate = (event) => {
-                    if (event.candidate && currentCall) {
+                    if (event.candidate) {
                         // Отправляем ICE кандидата через Firestore
                         sendICECandidate(event.candidate);
-                    }
-                };
-
-                // Обработчик изменения состояния соединения
-                peerConnection.onconnectionstatechange = () => {
-                    console.log('Состояние соединения:', peerConnection.connectionState);
-                    if (peerConnection.connectionState === 'connected') {
-                        console.log('Соединение установлено!');
-                    } else if (peerConnection.connectionState === 'disconnected' || 
-                               peerConnection.connectionState === 'failed') {
-                        console.log('Соединение разорвано');
-                        endCall();
                     }
                 };
 
@@ -3639,7 +3324,7 @@
                     });
                 }
 
-                // Создаем предложение для установки соединения (только для инициатора)
+                // Создаем предложение для установки соединения
                 if (currentCall && currentCall.from === currentUser.uid) {
                     const offer = await peerConnection.createOffer();
                     await peerConnection.setLocalDescription(offer);
@@ -3658,6 +3343,13 @@
             await db.collection('calls').doc(currentCall.id).update({
                 offer: offer,
                 offerCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        async function sendAnswer(answer) {
+            await db.collection('calls').doc(currentCall.id).update({
+                answer: answer,
+                answerCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
 
@@ -3687,12 +3379,8 @@
 
             // Настраиваем кнопки управления
             document.getElementById('mute-btn').onclick = toggleMute;
-            document.getElementById('speaker-btn').onclick = toggleSpeaker;
             document.getElementById('video-btn').onclick = toggleVideo;
             document.getElementById('end-call-btn').onclick = endCall;
-
-            // Скрываем настройки устройств
-            document.getElementById('device-settings').classList.remove('active');
         }
 
         function hideCallScreen() {
@@ -3710,17 +3398,7 @@
                 isMuted = !isMuted;
                 document.getElementById('mute-btn').style.background = isMuted ? 
                     'var(--error-color)' : 'var(--accent-color)';
-                document.getElementById('mute-btn').innerHTML = isMuted ? '🎤❌' : '🎤';
             }
-        }
-
-        function toggleSpeaker() {
-            isSpeakerOn = !isSpeakerOn;
-            const remoteVideo = document.getElementById('remote-video');
-            remoteVideo.muted = !isSpeakerOn;
-            document.getElementById('speaker-btn').style.background = isSpeakerOn ? 
-                'var(--accent-color)' : 'var(--error-color)';
-            document.getElementById('speaker-btn').innerHTML = isSpeakerOn ? '🔊' : '🔇';
         }
 
         function toggleVideo() {
@@ -3732,7 +3410,6 @@
                 isVideoOff = !isVideoOff;
                 document.getElementById('video-btn').style.background = isVideoOff ? 
                     'var(--error-color)' : 'var(--accent-color)';
-                document.getElementById('video-btn').innerHTML = isVideoOff ? '📹❌' : '📹';
             }
         }
 
@@ -3790,23 +3467,1277 @@
                 callType = null;
                 isMuted = false;
                 isVideoOff = false;
-                isSpeakerOn = true;
-
-                // Сбрасываем кнопки
-                document.getElementById('mute-btn').style.background = 'var(--accent-color)';
-                document.getElementById('mute-btn').innerHTML = '🎤';
-                document.getElementById('speaker-btn').style.background = 'var(--accent-color)';
-                document.getElementById('speaker-btn').innerHTML = '🔊';
-                document.getElementById('video-btn').style.background = 'var(--accent-color)';
-                document.getElementById('video-btn').innerHTML = '📹';
 
             } catch (error) {
                 console.error('Ошибка завершения звонка:', error);
             }
         }
 
-        // Остальной код мессенджера (сообщения, чаты, профиль) остается без изменений
-        // ... [остальной код остается таким же как в предыдущей версии] ...
+        // ИСПРАВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ
+        function initNotifications() {
+            if (!currentUser) return;
+
+            console.log('🚀 Инициализация системы уведомлений...');
+
+            // Очищаем предыдущие слушатели
+            cleanupNotifications();
+
+            // Слушаем все чаты пользователя для новых сообщений
+            globalNotificationsListener = db.collection('chats')
+                .where('participants', 'array-contains', currentUser.uid)
+                .onSnapshot(async (snapshot) => {
+                    // Обрабатываем изменения во всех чатах
+                    snapshot.docChanges().forEach(async (change) => {
+                        if (change.type === 'modified') {
+                            const chatData = change.doc.data();
+                            await processChatUpdate(change.doc.id, chatData);
+                        } else if (change.type === 'added') {
+                            // Для новых чатов тоже добавляем обработку
+                            const chatData = change.doc.data();
+                            await processChatUpdate(change.doc.id, chatData);
+                        }
+                    });
+                }, (error) => {
+                    console.error('Ошибка в системе уведомлений:', error);
+                });
+
+            // Инициализируем временные метки для существующих чатов
+            initializeMessageTimestamps();
+        }
+
+        async function initializeMessageTimestamps() {
+            try {
+                const chatsSnapshot = await db.collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .get();
+
+                chatsSnapshot.forEach(doc => {
+                    const chatData = doc.data();
+                    if (chatData.lastMessageTime) {
+                        lastMessageTimestamps.set(doc.id, chatData.lastMessageTime.toDate().getTime());
+                    }
+                });
+            } catch (error) {
+                console.error('Ошибка инициализации временных меток:', error);
+            }
+        }
+
+        async function processChatUpdate(chatId, chatData) {
+            const lastMessage = chatData.lastMessage;
+            const lastMessageTime = chatData.lastMessageTime;
+            const lastMessageSender = chatData.lastMessageSender;
+            
+            if (!lastMessage || !lastMessageTime || !lastMessageSender) {
+                return;
+            }
+
+            // Получаем время последнего сообщения
+            const messageTime = lastMessageTime.toDate().getTime();
+            const lastKnownTime = lastMessageTimestamps.get(chatId) || 0;
+            
+            console.log('🔍 Проверка сообщения:', {
+                chatId,
+                lastMessage,
+                lastMessageSender,
+                isUserInChat,
+                lastOpenedChatId,
+                messageTime,
+                lastKnownTime,
+                isNewMessage: messageTime > lastKnownTime,
+                isNotFromCurrentUser: lastMessageSender !== currentUser.uid,
+                isNotInChat: !isUserInChat || chatId !== lastOpenedChatId
+            });
+
+            // Проверяем условия для показа уведомления
+            const shouldShowNotification = 
+                lastMessage && 
+                lastMessageTime && 
+                lastMessageSender !== currentUser.uid && // Сообщение не от текущего пользователя
+                (!isUserInChat || chatId !== lastOpenedChatId) && // Пользователь НЕ находится в этом чате
+                messageTime > lastKnownTime; // Это новое сообщение
+
+            if (shouldShowNotification) {
+                console.log('✅ Показываем уведомление для чата:', chatId);
+                // Обновляем время последнего сообщения
+                lastMessageTimestamps.set(chatId, messageTime);
+                
+                // Получаем информацию об отправителе
+                const otherParticipantId = chatData.participants.find(id => id !== currentUser.uid);
+                if (otherParticipantId) {
+                    const senderData = await getUserData(otherParticipantId);
+                    showNotification(senderData, lastMessage, chatId);
+                }
+            } else if (messageTime > 0) {
+                // Обновляем время даже если уведомление не показывается
+                lastMessageTimestamps.set(chatId, messageTime);
+            }
+        }
+
+        function showNotification(sender, message, chatId) {
+            // Дополнительная проверка - не показывать уведомления если пользователь в этом чате
+            if (isUserInChat && currentChat && currentChat.id === chatId) {
+                console.log('❌ Пользователь в чате, уведомление не показываем');
+                return;
+            }
+
+            // Создаем уникальный ID для уведомления
+            const notificationId = 'notification_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const notification = document.createElement('div');
+            notification.className = 'message-notification';
+            notification.id = notificationId;
+            notification.dataset.chatId = chatId;
+            
+            const firstLetter = sender.nickname ? sender.nickname.charAt(0).toUpperCase() : 'U';
+            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            const isOfficial = sender.email === 'vzorkin2010@gmail.com' || 
+                               sender.email === 'izbrannoe@gmail.com' || 
+                               sender.email === 'support@gmail.com' ||
+                               sender.email === 'abugay12@mail.ru';
+            
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-avatar">
+                        ${sender.avatarURL ? 
+                            `<img src="${sender.avatarURL}" alt="${sender.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">` : 
+                            firstLetter
+                        }
+                    </div>
+                    <div class="notification-info">
+                        <div class="notification-sender">
+                            ${sender.nickname}
+                            ${isOfficial ? `
+                                <span class="official-checkmark">
+                                    <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="notification-message">${message}</div>
+                        <div class="notification-time">Только что</div>
+                    </div>
+                    <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
+                </div>
+            `;
+
+            const container = document.getElementById('notifications-container');
+            container.appendChild(notification);
+
+            // Добавляем в активные уведомления
+            activeNotifications.add(notificationId);
+
+            // Анимация появления
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // Обработчик клика по уведомлению - ПЕРЕХОД В ЧАТ
+            notification.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('notification-close')) {
+                    console.log('🎯 Клик по уведомлению, переход в чат:', chatId);
+                    // Находим пользователя для этого чата
+                    findUserForChat(chatId).then(userId => {
+                        if (userId) {
+                            openChat(chatId, userId);
+                        }
+                    });
+                    closeNotification(notificationId);
+                }
+            });
+
+            // Автоматическое закрытие через 5 секунд
+            setTimeout(() => {
+                if (activeNotifications.has(notificationId)) {
+                    closeNotification(notificationId);
+                }
+            }, 5000);
+        }
+
+        // Функция для поиска пользователя в чате
+        async function findUserForChat(chatId) {
+            try {
+                const chatDoc = await db.collection('chats').doc(chatId).get();
+                if (chatDoc.exists) {
+                    const chatData = chatDoc.data();
+                    return chatData.participants.find(id => id !== currentUser.uid);
+                }
+            } catch (error) {
+                console.error('Ошибка поиска пользователя для чата:', error);
+            }
+            return null;
+        }
+
+        function closeNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.classList.remove('show');
+                notification.classList.add('hiding');
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                    activeNotifications.delete(notificationId);
+                }, 400);
+            }
+        }
+
+        function cleanupNotifications() {
+            // Останавливаем глобального слушателя
+            if (globalNotificationsListener) {
+                globalNotificationsListener();
+                globalNotificationsListener = null;
+            }
+
+            // Останавливаем все слушатели чатов
+            chatListeners.forEach(listener => listener());
+            chatListeners.clear();
+
+            // Очищаем активные уведомления
+            activeNotifications.clear();
+        }
+
+        function initEventListeners() {
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            
+            // Обработчик Enter для отправки сообщения
+            document.getElementById('message-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Автопоиск при вводе
+            document.getElementById('search-input').addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchUsers();
+                }, 500);
+            });
+
+            // Авторазмер текстового поля
+            document.getElementById('message-input').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Закрытие модального окна по клику на фон
+            document.getElementById('user-profile-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeUserProfile();
+                }
+            });
+
+            // Обработчики для drag & drop
+            const messageInput = document.getElementById('message-input');
+            const pasteOverlay = document.getElementById('paste-overlay');
+
+            messageInput.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                pasteOverlay.classList.add('active');
+            });
+
+            messageInput.addEventListener('dragleave', function(e) {
+                if (!messageInput.contains(e.relatedTarget)) {
+                    pasteOverlay.classList.remove('active');
+                }
+            });
+
+            messageInput.addEventListener('drop', function(e) {
+                e.preventDefault();
+                pasteOverlay.classList.remove('active');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files);
+                }
+            });
+
+            // Обработчик вставки изображений
+            messageInput.addEventListener('paste', function(e) {
+                const items = e.clipboardData?.items;
+                if (items) {
+                    for (let item of items) {
+                        if (item.type.indexOf('image') !== -1) {
+                            const file = item.getAsFile();
+                            if (file) {
+                                e.preventDefault();
+                                handleFileUpload([file]);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Предотвращаем масштабирование на мобильных устройствах при двойном тапе
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        function initFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files);
+                    // Сбрасываем значение input чтобы можно было загрузить тот же файл снова
+                    e.target.value = '';
+                }
+            });
+        }
+
+        // ОСНОВНЫЕ ФУНКЦИИ МЕССЕНДЖЕРА
+        async function loadAllUsers() {
+            try {
+                const usersQuery = await db.collection('users').get();
+                const chatsContainer = document.getElementById('chats-list');
+                chatsContainer.innerHTML = '';
+
+                if (usersQuery.empty) {
+                    chatsContainer.innerHTML = '<p class="text-center">Нет пользователей</p>';
+                    return;
+                }
+
+                usersQuery.forEach(doc => {
+                    const user = doc.data();
+                    if (doc.id !== currentUser.uid && !user.banned) {
+                        const userElement = createUserElement(user, doc.id);
+                        chatsContainer.appendChild(userElement);
+                    }
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки пользователей:', error);
+                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
+            }
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('search-input').value.trim();
+            const resultsContainer = document.getElementById('search-results');
+
+            if (!query) {
+                resultsContainer.innerHTML = '<p class="text-center">Введите username для поиска</p>';
+                return;
+            }
+
+            try {
+                resultsContainer.innerHTML = '<p class="text-center">Поиск...</p>';
+
+                const usersQuery = await db.collection('users')
+                    .where('username', '>=', query)
+                    .where('username', '<=', query + '\uf8ff')
+                    .limit(10)
+                    .get();
+
+                if (usersQuery.empty) {
+                    resultsContainer.innerHTML = '<p class="text-center">Пользователи не найдены</p>';
+                    return;
+                }
+
+                resultsContainer.innerHTML = '';
+                let foundUsers = false;
+                
+                usersQuery.forEach(doc => {
+                    const user = doc.data();
+                    if (doc.id !== currentUser.uid && !user.banned) {
+                        const userElement = createUserElement(user, doc.id);
+                        resultsContainer.appendChild(userElement);
+                        foundUsers = true;
+                    }
+                });
+
+                if (!foundUsers) {
+                    resultsContainer.innerHTML = '<p class="text-center">Пользователи не найдены</p>';
+                }
+            } catch (error) {
+                resultsContainer.innerHTML = '<p class="text-center">Ошибка поиска</p>';
+            }
+        }
+
+        function createUserElement(user, userId) {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.onclick = () => startChatWithUser(userId);
+            const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
+            
+            // Проверяем, является ли пользователь официальным аккаунтом
+            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            const isOfficial = user.email === 'vzorkin2010@gmail.com' || 
+                               user.email === 'izbrannoe@gmail.com' || 
+                               user.email === 'support@gmail.com' ||
+                               user.email === 'abugay12@mail.ru';
+            
+            div.innerHTML = `
+                <div class="avatar">
+                    ${user.avatarURL ? 
+                        `<img src="${user.avatarURL}" alt="${user.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">` : 
+                        firstLetter
+                    }
+                </div>
+                <div class="user-info">
+                    <strong class="${isOfficial ? 'official-badge' : ''}">
+                        ${user.nickname}
+                        ${isOfficial ? `
+                            <span class="official-checkmark">
+                                <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                            </span>
+                        ` : ''}
+                    </strong>
+                    <p>@${user.username}</p>
+                    ${user.bio ? `<p>${user.bio}</p>` : ''}
+                </div>
+            `;
+            return div;
+        }
+
+        async function startChatWithUser(userId) {
+            try {
+                let chatId = await findExistingChat(userId);
+                
+                if (!chatId) {
+                    // Создаем новый чат
+                    const chatRef = await db.collection('chats').add({
+                        participants: [currentUser.uid, userId],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: '',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: '',
+                        participantNames: {},
+                        participantAvatars: {}
+                    });
+                    
+                    chatId = chatRef.id;
+                    
+                    // Обновляем информацию об участниках
+                    await updateChatParticipantsInfo(chatId, [currentUser.uid, userId]);
+                }
+                
+                openChat(chatId, userId);
+                showSection('chat');
+                
+            } catch (error) {
+                console.error('Ошибка создания чата:', error);
+                alert('Ошибка создания чата: ' + error.message);
+            }
+        }
+
+        async function updateChatParticipantsInfo(chatId, participantIds) {
+            try {
+                const participantsData = {};
+                const avatarsData = {};
+                
+                for (const uid of participantIds) {
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        participantsData[uid] = userData.nickname || userData.username;
+                        avatarsData[uid] = userData.avatarURL || '';
+                    }
+                }
+                
+                await db.collection('chats').doc(chatId).update({
+                    participantNames: participantsData,
+                    participantAvatars: avatarsData
+                });
+                
+            } catch (error) {
+                console.error('Ошибка обновления информации участников:', error);
+            }
+        }
+
+        async function findExistingChat(userId) {
+            try {
+                const chatQuery = await db.collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .get();
+
+                for (let doc of chatQuery.docs) {
+                    const chat = doc.data();
+                    if (chat.participants && chat.participants.includes(userId)) {
+                        return doc.id;
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('Ошибка поиска чата:', error);
+                return null;
+            }
+        }
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТКРЫТИЯ ЧАТА
+        async function openChat(chatId, otherUserId) {
+            console.log('🔓 ОТКРЫТИЕ ЧАТА:', chatId, 'isUserInChat = true');
+            
+            // Устанавливаем флаг, что пользователь находится в чате
+            isUserInChat = true;
+            lastOpenedChatId = chatId;
+            
+            currentChat = { id: chatId, otherUserId: otherUserId };
+            currentChatUser = await getUserData(otherUserId);
+            
+            // Обновляем время последнего сообщения для этого чата
+            try {
+                const chatDoc = await db.collection('chats').doc(chatId).get();
+                if (chatDoc.exists) {
+                    const chatData = chatDoc.data();
+                    if (chatData.lastMessageTime) {
+                        const messageTime = chatData.lastMessageTime.toDate().getTime();
+                        lastMessageTimestamps.set(chatId, messageTime);
+                        console.log('🕒 Обновлено время для чата', chatId, ':', messageTime);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка обновления времени сообщения:', error);
+            }
+            
+            // Проверяем, является ли пользователь официальным аккаунтом
+            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || 
+                               currentChatUser.email === 'izbrannoe@gmail.com' || 
+                               currentChatUser.email === 'support@gmail.com' ||
+                               currentChatUser.email === 'abugay12@mail.ru';
+            
+            document.getElementById('chat-username').innerHTML = `
+                ${currentChatUser.nickname}
+                ${isOfficial ? `
+                    <span class="official-checkmark">
+                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                    </span>
+                ` : ''}
+            `;
+            
+            const chatAvatar = document.getElementById('chat-avatar');
+            const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
+            
+            if (currentChatUser.avatarURL) {
+                chatAvatar.innerHTML = `<img src="${currentChatUser.avatarURL}" alt="${currentChatUser.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">`;
+            } else {
+                chatAvatar.innerHTML = firstLetter;
+            }
+            
+            // Показываем кнопку профиля для обычных чатов
+            const chatUserInfo = document.getElementById('chat-user-info');
+            chatUserInfo.style.display = 'flex';
+            chatUserInfo.setAttribute('onclick', 'showUserProfile()');
+            
+            // Включаем поле ввода
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.querySelector('.send-button');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.placeholder = 'Введите сообщение...';
+            messageInput.focus();
+            
+            // Инициализируем слушатель активных звонков для этого чата
+            initActiveCallListener();
+            
+            loadMessages(chatId);
+            showSection('chat');
+        }
+
+        // ПОКАЗАТЬ ПРОФИЛЬ СОБЕСЕДНИКА
+        async function showUserProfile() {
+            if (!currentChatUser) return;
+            
+            const modal = document.getElementById('user-profile-modal');
+            const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
+            
+            // Проверяем, является ли пользователь официальным аккаунтом
+            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || 
+                               currentChatUser.email === 'izbrannoe@gmail.com' || 
+                               currentChatUser.email === 'support@gmail.com' ||
+                               currentChatUser.email === 'abugay12@mail.ru';
+            
+            const modalAvatar = document.getElementById('modal-avatar');
+            if (currentChatUser.avatarURL) {
+                modalAvatar.innerHTML = `<img src="${currentChatUser.avatarURL}" alt="${currentChatUser.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">`;
+            } else {
+                modalAvatar.innerHTML = firstLetter;
+            }
+            
+            document.getElementById('modal-nickname').innerHTML = `
+                ${currentChatUser.nickname || 'Неизвестно'}
+                ${isOfficial ? `
+                    <span class="official-checkmark">
+                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                    </span>
+                ` : ''}
+            `;
+            document.getElementById('modal-username').textContent = '@' + (currentChatUser.username || 'unknown');
+            
+            const statusElement = document.getElementById('modal-status');
+            if (currentChatUser.banned) {
+                statusElement.innerHTML = '<span class="user-status banned"></span> Заблокирован';
+                if (currentChatUser.banReason) {
+                    statusElement.innerHTML += `<br><small style="color: var(--error-color);">Причина: ${currentChatUser.banReason}</small>`;
+                }
+            } else {
+                statusElement.innerHTML = '<span class="user-status active"></span> Активен';
+            }
+            
+            document.getElementById('modal-bio').textContent = currentChatUser.bio || 'Нет описания';
+            
+            modal.classList.add('active');
+        }
+
+        function closeUserProfile() {
+            const modal = document.getElementById('user-profile-modal');
+            modal.classList.remove('active');
+        }
+
+        function loadMessages(chatId) {
+            if (messagesListener) messagesListener();
+
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '<p class="text-center">Загрузка сообщений...</p>';
+
+            // Реальная подписка на обновления сообщений
+            messagesListener = db.collection('chats').doc(chatId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    messagesContainer.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        messagesContainer.innerHTML = '<p class="text-center">Нет сообщений. Начните общение!</p>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const message = doc.data();
+                        const messageElement = createMessageElement(message, doc.id);
+                        messagesContainer.appendChild(messageElement);
+                    });
+
+                    // Автопрокрутка к последнему сообщению
+                    setTimeout(() => {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }, 100);
+                }, (error) => {
+                    console.error('Ошибка загрузки сообщений:', error);
+                    messagesContainer.innerHTML = '<p class="text-center">Ошибка загрузки сообщений</p>';
+                });
+        }
+
+        function createMessageElement(message, messageId) {
+            const div = document.createElement('div');
+            const isSent = message.senderId === currentUser.uid;
+            const isEditing = editingMessageId === messageId;
+            div.className = `message ${isSent ? 'sent' : 'received'} ${isEditing ? 'editing' : ''}`;
+            
+            const time = message.timestamp ? formatTime(message.timestamp.toDate()) : 'только что';
+            
+            // Проверяем, принадлежит ли сообщение текущему пользователю
+            const isOwnMessage = message.senderId === currentUser.uid;
+            
+            if (isEditing) {
+                div.innerHTML = `
+                    <input type="text" class="edit-input" value="${message.text}" id="edit-input-${messageId}">
+                    <div class="edit-actions">
+                        <button class="edit-btn edit-save" onclick="saveMessageEdit('${messageId}')">Сохранить</button>
+                        <button class="edit-btn edit-cancel" onclick="cancelMessageEdit()">Отмена</button>
+                    </div>
+                    <div class="message-time">${time}</div>
+                `;
+            } else if (message.type === 'file') {
+                // Сообщение с файлом - показываем кнопки действий только для своих сообщений
+                div.innerHTML = `
+                    <div class="file-message" onclick="openFile('${message.fileURL}', '${message.fileName}')">
+                        <div class="file-icon">${getFileIcon(message.fileType)}</div>
+                        <div class="file-info">
+                            <div class="file-name">${message.fileName}</div>
+                            <div class="file-size">${formatFileSize(message.fileSize)}</div>
+                        </div>
+                    </div>
+                    ${isOwnMessage ? `
+                        <div class="message-actions">
+                            <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
+                        </div>
+                    ` : ''}
+                    <div class="message-time">${time}</div>
+                `;
+            } else {
+                // Текстовое сообщение - показываем кнопки действий только для своих сообщений
+                div.innerHTML = `
+                    <div class="message-text">${message.text || ''}</div>
+                    ${isOwnMessage ? `
+                        <div class="message-actions">
+                            <button class="message-action-btn edit" onclick="editMessage('${messageId}', '${message.text}')">✏️</button>
+                            <button class="message-action-btn delete" onclick="deleteMessage('${messageId}')">🗑️</button>
+                        </div>
+                    ` : ''}
+                    <div class="message-time">${time}</div>
+                `;
+            }
+            
+            return div;
+        }
+
+        function getFileIcon(fileType) {
+            if (fileType.startsWith('image/')) return '🖼️';
+            if (fileType.startsWith('video/')) return '🎬';
+            if (fileType.startsWith('audio/')) return '🎵';
+            if (fileType.includes('pdf')) return '📕';
+            if (fileType.includes('word') || fileType.includes('document')) return '📄';
+            if (fileType.includes('sheet') || fileType.includes('excel')) return '📊';
+            if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar')) return '📦';
+            return '📎';
+        }
+
+        function openFile(url, fileName) {
+            window.open(url, '_blank');
+        }
+
+        async function handleFileUpload(files) {
+            if (!currentChat) {
+                alert('Сначала выберите чат!');
+                return;
+            }
+
+            try {
+                // Обрабатываем файлы последовательно
+                for (let file of files) {
+                    await uploadFile(file);
+                }
+            } catch (error) {
+                console.error('Ошибка обработки файлов:', error);
+            }
+        }
+
+        async function uploadFile(file) {
+            if (!currentChat) return;
+
+            try {
+                // Создаем временное сообщение о загрузке
+                const tempMessageId = 'temp_' + Date.now();
+                const messagesContainer = document.getElementById('messages-container');
+                
+                const tempMessageDiv = document.createElement('div');
+                tempMessageDiv.className = 'message sent';
+                tempMessageDiv.id = tempMessageId;
+                tempMessageDiv.innerHTML = `
+                    <div class="file-message">
+                        <div class="file-icon">📎</div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                            <div class="upload-progress">
+                                <div class="upload-progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-time">Загрузка...</div>
+                `;
+                messagesContainer.appendChild(tempMessageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Генерируем уникальное имя файла
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+                const filePath = `chats/${currentChat.id}/${fileName}`;
+                
+                // Загружаем файл в Firebase Storage
+                const storageRef = storage.ref(filePath);
+                const uploadTask = storageRef.put(file);
+
+                // Возвращаем промис для отслеживания завершения загрузки
+                return new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            const progressBar = document.querySelector(`#${tempMessageId} .upload-progress-bar`);
+                            if (progressBar) {
+                                progressBar.style.width = progress + '%';
+                            }
+                        },
+                        (error) => {
+                            console.error('Ошибка загрузки файла:', error);
+                            document.getElementById(tempMessageId).innerHTML = `
+                                <div class="error-message">Ошибка загрузки: ${file.name}</div>
+                            `;
+                            setTimeout(() => {
+                                const element = document.getElementById(tempMessageId);
+                                if (element) element.remove();
+                            }, 3000);
+                            reject(error);
+                        },
+                        async () => {
+                            try {
+                                // Загрузка завершена
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                
+                                // Сохраняем информацию о файле в Firestore
+                                await db.collection('chats').doc(currentChat.id).collection('messages').add({
+                                    type: 'file',
+                                    fileName: file.name,
+                                    fileURL: downloadURL,
+                                    fileSize: file.size,
+                                    fileType: file.type,
+                                    senderId: currentUser.uid,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+
+                                // Обновляем последнее сообщение в чате
+                                await db.collection('chats').doc(currentChat.id).update({
+                                    lastMessage: `Файл: ${file.name}`,
+                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                                    lastMessageSender: currentUser.uid
+                                });
+
+                                // Удаляем временное сообщение
+                                const tempElement = document.getElementById(tempMessageId);
+                                if (tempElement) {
+                                    tempElement.remove();
+                                }
+                                
+                                resolve();
+                            } catch (error) {
+                                console.error('Ошибка сохранения информации о файле:', error);
+                                reject(error);
+                            }
+                        }
+                    );
+                });
+
+            } catch (error) {
+                console.error('Ошибка загрузки файла:', error);
+                alert('Ошибка загрузки файла: ' + error.message);
+                throw error;
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ИСПРАВЛЕННОЕ УДАЛЕНИЕ СООБЩЕНИЯ - ТОЛЬКО СВОИ СООБЩЕНИЯ
+        async function deleteMessage(messageId) {
+            if (!currentChat) return;
+            
+            try {
+                // Сначала получаем сообщение чтобы проверить, принадлежит ли оно текущему пользователю
+                const messageDoc = await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get();
+                
+                if (!messageDoc.exists) {
+                    alert('Сообщение не найдено');
+                    return;
+                }
+                
+                const messageData = messageDoc.data();
+                
+                // Проверяем, принадлежит ли сообщение текущему пользователю
+                if (messageData.senderId !== currentUser.uid) {
+                    alert('Вы можете удалять только свои сообщения!');
+                    return;
+                }
+                
+                if (!confirm('Вы уверены, что хотите удалить это сообщение?')) {
+                    return;
+                }
+
+                await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).delete();
+                
+                // Обновляем последнее сообщение в чате если нужно
+                const messagesQuery = await db.collection('chats').doc(currentChat.id).collection('messages')
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get();
+
+                if (messagesQuery.empty) {
+                    // Нет сообщений - очищаем последнее сообщение
+                    await db.collection('chats').doc(currentChat.id).update({
+                        lastMessage: '',
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: ''
+                    });
+                } else {
+                    // Обновляем последнее сообщение
+                    const lastMessage = messagesQuery.docs[0].data();
+                    await db.collection('chats').doc(currentChat.id).update({
+                        lastMessage: lastMessage.text ? (lastMessage.text.length > 50 ? lastMessage.text.substring(0, 50) + '...' : lastMessage.text) : `Файл: ${lastMessage.fileName}`,
+                        lastMessageTime: lastMessage.timestamp,
+                        lastMessageSender: lastMessage.senderId
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка удаления сообщения:', error);
+                alert('Ошибка удаления сообщения: ' + error.message);
+            }
+        }
+
+        // ИСПРАВЛЕННОЕ РЕДАКТИРОВАНИЕ СООБЩЕНИЯ - ТОЛЬКО СВОИ СООБЩЕНИЯ
+        function editMessage(messageId, currentText) {
+            // Проверяем, принадлежит ли сообщение текущему пользователю
+            // Для этого нужно получить сообщение из базы данных
+            db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const messageData = doc.data();
+                        if (messageData.senderId !== currentUser.uid) {
+                            alert('Вы можете редактировать только свои сообщения!');
+                            return;
+                        }
+                        
+                        // Если сообщение принадлежит пользователю, разрешаем редактирование
+                        editingMessageId = messageId;
+                        loadMessages(currentChat.id);
+                        
+                        // Фокус на поле ввода после рендера
+                        setTimeout(() => {
+                            const editInput = document.getElementById(`edit-input-${messageId}`);
+                            if (editInput) {
+                                editInput.focus();
+                                editInput.select();
+                            }
+                        }, 100);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Ошибка проверки сообщения:', error);
+                });
+        }
+
+        async function saveMessageEdit(messageId) {
+            const editInput = document.getElementById(`edit-input-${messageId}`);
+            const newText = editInput.value.trim();
+
+            if (!newText) {
+                alert('Сообщение не может быть пустым');
+                return;
+            }
+
+            try {
+                // Дополнительная проверка на принадлежность сообщения
+                const messageDoc = await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).get();
+                if (messageDoc.exists && messageDoc.data().senderId !== currentUser.uid) {
+                    alert('Вы можете редактировать только свои сообщения!');
+                    return;
+                }
+
+                await db.collection('chats').doc(currentChat.id).collection('messages').doc(messageId).update({
+                    text: newText,
+                    edited: true,
+                    editedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Обновляем последнее сообщение в чате если это последнее сообщение
+                const messagesQuery = await db.collection('chats').doc(currentChat.id).collection('messages')
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get();
+
+                if (!messagesQuery.empty && messagesQuery.docs[0].id === messageId) {
+                    await db.collection('chats').doc(currentChat.id).update({
+                        lastMessage: newText.length > 50 ? newText.substring(0, 50) + '...' : newText,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessageSender: currentUser.uid
+                    });
+                }
+
+                editingMessageId = null;
+                loadMessages(currentChat.id);
+            } catch (error) {
+                console.error('Ошибка редактирования сообщения:', error);
+                alert('Ошибка редактирования сообщения: ' + error.message);
+            }
+        }
+
+        function cancelMessageEdit() {
+            editingMessageId = null;
+            loadMessages(currentChat.id);
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+
+            if (!text || !currentChat) return;
+
+            try {
+                // Отправляем сообщение
+                await db.collection('chats').doc(currentChat.id).collection('messages').add({
+                    text: text,
+                    senderId: currentUser.uid,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Обновляем последнее сообщение в чате
+                await db.collection('chats').doc(currentChat.id).update({
+                    lastMessage: text.length > 50 ? text.substring(0, 50) + '...' : text,
+                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessageSender: currentUser.uid
+                });
+
+                // Очищаем поле ввода и сбрасываем высоту
+                input.value = '';
+                input.style.height = 'auto';
+                input.focus();
+                
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+                alert('Ошибка отправки сообщения: ' + error.message);
+            }
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'только что';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' мин назад';
+            if (diff < 86400000) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            
+            return date.toLocaleDateString('ru-RU');
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function showAuth() {
+            document.getElementById('auth-section').classList.add('active');
+            document.getElementById('main-section').classList.remove('active');
+            showForm('login');
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-section').classList.remove('active');
+            document.getElementById('main-section').classList.add('active');
+        }
+
+        function showForm(formType) {
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(formType + '-form').classList.add('active');
+        }
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОКАЗА СЕКЦИИ
+        function showSection(sectionName) {
+            console.log('🔄 ПЕРЕКЛЮЧЕНИЕ СЕКЦИИ:', sectionName);
+            
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (sectionName !== 'chat') {
+                // Когда пользователь выходит из чата
+                console.log('🚪 ВЫХОД ИЗ ЧАТА, isUserInChat = false, lastOpenedChatId = null');
+                isUserInChat = false;
+                lastOpenedChatId = null;
+                currentChat = null;
+                
+                // Останавливаем слушатель сообщений
+                if (messagesListener) {
+                    messagesListener();
+                    messagesListener = null;
+                }
+                
+                // Останавливаем слушатель активных звонков
+                if (activeCallListener) {
+                    activeCallListener();
+                    activeCallListener = null;
+                }
+                
+                const navBtn = document.querySelector(`.nav-btn[onclick="showSection('${sectionName}')"]`);
+                if (navBtn) navBtn.classList.add('active');
+            } else {
+                // Когда пользователь входит в чат
+                console.log('🚀 ВХОД В ЧАТ, isUserInChat = true');
+                isUserInChat = true;
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm').value;
+
+            if (!email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают!');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Пароль должен содержать минимум 6 символов');
+                return;
+            }
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    nickname: email.split('@')[0],
+                    username: generateUsername(email),
+                    bio: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    banned: false,
+                    banReason: ''
+                });
+                
+                alert('Регистрация успешна!');
+            } catch (error) {
+                alert('Ошибка регистрации: ' + error.message);
+            }
+        }
+
+        function generateUsername(email) {
+            return email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_') + '_' + Math.random().toString(36).substr(2, 5);
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                alert('Ошибка входа: ' + error.message);
+            }
+        }
+
+        async function logout() {
+            if (messagesListener) messagesListener();
+            cleanupNotifications();
+            cleanupCallListeners();
+            endCall();
+            
+            await auth.signOut();
+        }
+
+        async function loadUserProfile(uid) {
+            try {
+                const doc = await db.collection('users').doc(uid).get();
+                if (doc.exists) {
+                    currentUserData = doc.data();
+                    updateProfileUI();
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки профиля:', error);
+            }
+        }
+
+        function updateProfileUI() {
+            if (!currentUserData) return;
+
+            // Обновляем аватары
+            const userAvatar = document.getElementById('user-avatar');
+            const profileAvatar = document.getElementById('profile-avatar');
+            const firstLetter = currentUserData.nickname ? currentUserData.nickname.charAt(0).toUpperCase() : 'U';
+            
+            if (currentUserData.avatarURL) {
+                userAvatar.innerHTML = `<img src="${currentUserData.avatarURL}" alt="${currentUserData.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">`;
+                profileAvatar.innerHTML = `<img src="${currentUserData.avatarURL}" alt="${currentUserData.nickname}" onerror="this.style.display='none'; this.parentNode.innerHTML='${firstLetter}'">`;
+            } else {
+                userAvatar.innerHTML = firstLetter;
+                profileAvatar.innerHTML = firstLetter;
+            }
+
+            document.getElementById('user-nickname').textContent = currentUserData.nickname;
+            document.getElementById('profile-nickname').value = currentUserData.nickname;
+            document.getElementById('profile-username').value = currentUserData.username;
+            document.getElementById('profile-bio').value = currentUserData.bio || '';
+        }
+
+        async function updateProfile() {
+            const nickname = document.getElementById('profile-nickname').value.trim();
+            const username = document.getElementById('profile-username').value.trim();
+            const bio = document.getElementById('profile-bio').value.trim();
+
+            if (!nickname || !username) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                alert('Username может содержать только английские буквы, цифры и нижние подчеркивания');
+                return;
+            }
+
+            try {
+                if (username !== currentUserData.username) {
+                    const usernameQuery = await db.collection('users')
+                        .where('username', '==', username)
+                        .get();
+                    
+                    if (!usernameQuery.empty) {
+                        alert('Этот username уже занят');
+                        return;
+                    }
+                }
+
+                await db.collection('users').doc(currentUser.uid).update({
+                    nickname: nickname,
+                    username: username,
+                    bio: bio
+                });
+
+                currentUserData.nickname = nickname;
+                currentUserData.username = username;
+                currentUserData.bio = bio;
+                
+                updateProfileUI();
+                alert('Профиль успешно обновлен!');
+            } catch (error) {
+                alert('Ошибка обновления профиля: ' + error.message);
+            }
+        }
+
+        async function getUserData(userId) {
+            if (usersCache.has(userId)) {
+                return usersCache.get(userId);
+            }
+
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    const userData = doc.data();
+                    usersCache.set(userId, userData);
+                    return userData;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+            }
+            
+            return { nickname: 'Неизвестный', username: 'unknown' };
+        }
 
     </script>
 </body>
