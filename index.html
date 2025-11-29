@@ -3349,7 +3349,8 @@
                     chatId: currentChat.id,
                     type: type,
                     status: 'calling',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    callStartTime: firebase.firestore.FieldValue.serverTimestamp() // Сохраняем время начала звонка
                 });
 
                 currentCall = {
@@ -3437,6 +3438,17 @@
 
                 // Начинаем установку WebRTC соединения
                 await createPeerConnection();
+                
+                // Синхронизируем таймер с собеседником
+                if (callData.callStartTime) {
+                    const callStartTimestamp = callData.callStartTime.toDate().getTime();
+                    const now = new Date().getTime();
+                    const elapsedSeconds = Math.floor((now - callStartTimestamp) / 1000);
+                    callStartTime = new Date(now - elapsedSeconds * 1000);
+                } else {
+                    callStartTime = new Date();
+                }
+                
                 startCallTimer();
 
             } catch (error) {
@@ -3466,7 +3478,11 @@
         async function startLocalStream(enableVideo = true) {
             try {
                 const constraints = {
-                    audio: true,
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    },
                     video: enableVideo ? {
                         width: { ideal: 1280 },
                         height: { ideal: 720 }
@@ -3496,10 +3512,20 @@
 
                 // Обработчик входящих потоков
                 peerConnection.ontrack = (event) => {
+                    console.log('Получен удаленный поток:', event.streams);
                     const remoteVideo = document.getElementById('remote-video');
                     if (event.streams && event.streams[0]) {
                         remoteVideo.srcObject = event.streams[0];
                         remoteStream = event.streams[0];
+                        
+                        // Включаем звук для удаленного потока
+                        remoteVideo.volume = 1.0;
+                        
+                        // Обновляем громкость если слайдер был изменен
+                        const volumeSlider = document.getElementById('volume-slider');
+                        if (volumeSlider) {
+                            remoteVideo.volume = volumeSlider.value / 100;
+                        }
                     }
                 };
 
@@ -3511,9 +3537,18 @@
                     }
                 };
 
+                // Обработчик изменения состояния соединения
+                peerConnection.onconnectionstatechange = (event) => {
+                    console.log('Состояние соединения:', peerConnection.connectionState);
+                    if (peerConnection.connectionState === 'connected') {
+                        console.log('WebRTC соединение установлено!');
+                    }
+                };
+
                 // Добавляем локальные треки в соединение
                 if (localStream) {
                     localStream.getTracks().forEach(track => {
+                        console.log('Добавляем локальный трек:', track.kind, track.enabled);
                         peerConnection.addTrack(track, localStream);
                     });
                 }
@@ -3527,10 +3562,76 @@
                     await sendOffer(offer);
                 }
 
+                // Слушаем предложения и ответы от собеседника
+                setupCallDataListener();
+
             } catch (error) {
                 console.error('Ошибка создания peer connection:', error);
                 throw error;
             }
+        }
+
+        function setupCallDataListener() {
+            if (!currentCall || !currentCall.id) return;
+
+            // Слушаем обновления данных звонка
+            db.collection('calls').doc(currentCall.id)
+                .onSnapshot(async (doc) => {
+                    if (doc.exists) {
+                        const callData = doc.data();
+                        
+                        // Обрабатываем предложение от собеседника
+                        if (callData.offer && !peerConnection.currentRemoteDescription) {
+                            try {
+                                await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+                                const answer = await peerConnection.createAnswer();
+                                await peerConnection.setLocalDescription(answer);
+                                await sendAnswer(answer);
+                            } catch (error) {
+                                console.error('Ошибка обработки предложения:', error);
+                            }
+                        }
+                        
+                        // Обрабатываем ответ от собеседника
+                        if (callData.answer && !peerConnection.currentRemoteDescription) {
+                            try {
+                                await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.answer));
+                            } catch (error) {
+                                console.error('Ошибка обработки ответа:', error);
+                            }
+                        }
+                        
+                        // Обрабатываем ICE кандидаты
+                        if (callData.iceCandidates) {
+                            callData.iceCandidates.forEach(async (candidateData) => {
+                                if (candidateData.from !== currentUser.uid) {
+                                    try {
+                                        await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData.candidate));
+                                    } catch (error) {
+                                        console.error('Ошибка добавления ICE кандидата:', error);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+
+            // Слушаем ICE кандидаты
+            db.collection('calls').doc(currentCall.id).collection('iceCandidates')
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach(async (change) => {
+                        if (change.type === 'added') {
+                            const candidateData = change.doc.data();
+                            if (candidateData.from !== currentUser.uid && peerConnection) {
+                                try {
+                                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidateData.candidate));
+                                } catch (error) {
+                                    console.error('Ошибка добавления ICE кандидата:', error);
+                                }
+                            }
+                        }
+                    });
+                });
         }
 
         async function sendOffer(offer) {
@@ -3597,6 +3698,7 @@
                 isMuted = !isMuted;
                 document.getElementById('mute-btn').style.background = isMuted ? 
                     'var(--error-color)' : 'var(--accent-color)';
+                document.getElementById('mute-btn').textContent = isMuted ? '🎤❌' : '🎤';
             }
         }
 
@@ -3609,17 +3711,26 @@
                 isVideoOff = !isVideoOff;
                 document.getElementById('video-btn').style.background = isVideoOff ? 
                     'var(--error-color)' : 'var(--accent-color)';
+                document.getElementById('video-btn').textContent = isVideoOff ? '📹❌' : '📹';
             }
         }
 
         function startCallTimer() {
-            callStartTime = new Date();
             callTimer = setInterval(() => {
-                const now = new Date();
-                const diff = Math.floor((now - callStartTime) / 1000);
-                const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
-                const seconds = (diff % 60).toString().padStart(2, '0');
-                document.getElementById('call-timer').textContent = `${minutes}:${seconds}`;
+                if (callStartTime) {
+                    const now = new Date();
+                    const diff = Math.floor((now - callStartTime) / 1000);
+                    const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+                    const seconds = (diff % 60).toString().padStart(2, '0');
+                    document.getElementById('call-timer').textContent = `${minutes}:${seconds}`;
+                    
+                    // Синхронизация с собеседником - обновляем время в Firestore каждые 10 секунд
+                    if (diff % 10 === 0 && currentCall && currentCall.id) {
+                        db.collection('calls').doc(currentCall.id).update({
+                            callDuration: diff
+                        });
+                    }
+                }
             }, 1000);
         }
 
