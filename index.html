@@ -997,6 +997,143 @@
                 width: 100%;
             }
         }
+
+        /* === НОВЫЕ СТИЛИ ДЛЯ НАСТРОЕК АУДИО === */
+        .audio-settings-panel {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            width: 300px;
+            z-index: 10001;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .audio-settings-panel.active {
+            display: flex;
+        }
+
+        .audio-setting {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .audio-setting label {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .audio-setting select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .audio-setting select option {
+            background: #333;
+            color: white;
+        }
+
+        .audio-settings-toggle {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 10001;
+            transition: var(--transition);
+        }
+
+        .audio-settings-toggle:hover {
+            background: var(--accent-hover);
+        }
+
+        .permission-request {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10002;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .permission-request.active {
+            display: flex;
+        }
+
+        .permission-content {
+            background: var(--primary-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .permission-content h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .permission-content p {
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .permission-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .permission-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+
+        .permission-btn.allow {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .permission-btn.deny {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .permission-btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
     
     <script>
@@ -2465,6 +2602,18 @@
     <!-- Контейнер для уведомлений -->
     <div class="notifications-container" id="notifications-container"></div>
 
+    <!-- Запрос разрешения на микрофон -->
+    <div id="permission-request" class="permission-request">
+        <div class="permission-content">
+            <h3>Разрешение на доступ к микрофону</h3>
+            <p>Для совершения звонков приложению требуется доступ к вашему микрофону. Разрешите доступ, чтобы начать общение.</p>
+            <div class="permission-buttons">
+                <button class="permission-btn allow" onclick="allowMicrophone()">Разрешить</button>
+                <button class="permission-btn deny" onclick="denyMicrophone()">Отклонить</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Контейнер для звонков -->
     <div id="call-container" class="call-container">
         <div class="call-info">
@@ -2492,6 +2641,27 @@
             <button class="call-btn mute" id="mute-btn" title="Отключить микрофон">🎤</button>
             <button class="call-btn video" id="video-btn" title="Отключить видео">📹</button>
             <button class="call-btn end-call" id="end-call-btn" title="Завершить звонок">📞</button>
+            <button class="call-btn settings" id="settings-btn" title="Настройки аудио">⚙️</button>
+        </div>
+        
+        <!-- Панель настроек аудио -->
+        <div id="audio-settings-panel" class="audio-settings-panel">
+            <div class="audio-setting">
+                <label for="microphone-select">Микрофон:</label>
+                <select id="microphone-select">
+                    <option value="">Автовыбор</option>
+                </select>
+            </div>
+            <div class="audio-setting">
+                <label for="speaker-select">Наушники/Динамики:</label>
+                <select id="speaker-select">
+                    <option value="">Автовыбор</option>
+                </select>
+            </div>
+            <div class="audio-setting">
+                <label for="volume-slider">Громкость:</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="100">
+            </div>
         </div>
     </div>
 
@@ -2804,6 +2974,11 @@
         let callType = null; // 'video' или 'voice'
         let activeCallListener = null;
         let currentActiveCall = null;
+        let microphonePermissionGranted = false;
+        let audioDevices = {
+            microphones: [],
+            speakers: []
+        };
 
         // Конфигурация STUN/TURN серверов для WebRTC
         const pcConfig = {
@@ -2821,6 +2996,7 @@
             initFileUpload();
             initAvatarUpload();
             setupViewport();
+            initAudioSettings();
         });
 
         function setupViewport() {
@@ -3157,6 +3333,15 @@
 
         async function initiateCall(type) {
             try {
+                // Проверяем разрешение на микрофон
+                if (!microphonePermissionGranted) {
+                    await requestMicrophonePermission();
+                    if (!microphonePermissionGranted) {
+                        alert('Для совершения звонков необходимо разрешение на использование микрофона.');
+                        return;
+                    }
+                }
+
                 // Создаем запись о звонке в Firestore
                 const callRef = await db.collection('calls').add({
                     from: currentUser.uid,
@@ -3221,6 +3406,15 @@
         async function acceptCall(callId) {
             try {
                 hideIncomingCall();
+
+                // Проверяем разрешение на микрофон
+                if (!microphonePermissionGranted) {
+                    await requestMicrophonePermission();
+                    if (!microphonePermissionGranted) {
+                        alert('Для приема звонков необходимо разрешение на использование микрофона.');
+                        return;
+                    }
+                }
 
                 // Обновляем статус звонка
                 await db.collection('calls').doc(callId).update({
@@ -3381,12 +3575,17 @@
             document.getElementById('mute-btn').onclick = toggleMute;
             document.getElementById('video-btn').onclick = toggleVideo;
             document.getElementById('end-call-btn').onclick = endCall;
+            document.getElementById('settings-btn').onclick = toggleAudioSettings;
+
+            // Обновляем список устройств
+            updateAudioDeviceLists();
         }
 
         function hideCallScreen() {
             const callContainer = document.getElementById('call-container');
             callContainer.classList.remove('active');
             stopCallTimer();
+            hideAudioSettings();
         }
 
         function toggleMute() {
@@ -3471,6 +3670,171 @@
             } catch (error) {
                 console.error('Ошибка завершения звонка:', error);
             }
+        }
+
+        // === ФУНКЦИИ ДЛЯ РАЗРЕШЕНИЙ И НАСТРОЕК АУДИО ===
+        async function requestMicrophonePermission() {
+            return new Promise((resolve) => {
+                const permissionRequest = document.getElementById('permission-request');
+                permissionRequest.classList.add('active');
+                
+                window.allowMicrophone = async () => {
+                    try {
+                        // Запрашиваем разрешение на доступ к микрофону
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        // Немедленно останавливаем поток, нам нужно только разрешение
+                        stream.getTracks().forEach(track => track.stop());
+                        microphonePermissionGranted = true;
+                        permissionRequest.classList.remove('active');
+                        resolve(true);
+                    } catch (error) {
+                        console.error('Ошибка получения разрешения на микрофон:', error);
+                        microphonePermissionGranted = false;
+                        permissionRequest.classList.remove('active');
+                        resolve(false);
+                    }
+                };
+                
+                window.denyMicrophone = () => {
+                    microphonePermissionGranted = false;
+                    permissionRequest.classList.remove('active');
+                    resolve(false);
+                };
+            });
+        }
+
+        function allowMicrophone() {
+            if (window.allowMicrophone) {
+                window.allowMicrophone();
+            }
+        }
+
+        function denyMicrophone() {
+            if (window.denyMicrophone) {
+                window.denyMicrophone();
+            }
+        }
+
+        function initAudioSettings() {
+            // Инициализация слайдера громкости
+            const volumeSlider = document.getElementById('volume-slider');
+            volumeSlider.addEventListener('input', function() {
+                setVolume(this.value);
+            });
+
+            // Инициализация выбора устройств
+            const microphoneSelect = document.getElementById('microphone-select');
+            const speakerSelect = document.getElementById('speaker-select');
+            
+            microphoneSelect.addEventListener('change', function() {
+                changeMicrophone(this.value);
+            });
+            
+            speakerSelect.addEventListener('change', function() {
+                changeSpeaker(this.value);
+            });
+
+            // Загружаем список устройств
+            loadAudioDevices();
+        }
+
+        async function loadAudioDevices() {
+            try {
+                // Получаем список устройств
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                
+                // Фильтруем микрофоны
+                audioDevices.microphones = devices.filter(device => device.kind === 'audioinput');
+                
+                // Фильтруем динамики/наушники
+                audioDevices.speakers = devices.filter(device => device.kind === 'audiooutput');
+                
+                // Обновляем выпадающие списки
+                updateAudioDeviceLists();
+            } catch (error) {
+                console.error('Ошибка загрузки списка устройств:', error);
+            }
+        }
+
+        function updateAudioDeviceLists() {
+            const microphoneSelect = document.getElementById('microphone-select');
+            const speakerSelect = document.getElementById('speaker-select');
+            
+            // Очищаем списки
+            microphoneSelect.innerHTML = '<option value="">Автовыбор</option>';
+            speakerSelect.innerHTML = '<option value="">Автовыбор</option>';
+            
+            // Заполняем список микрофонов
+            audioDevices.microphones.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Микрофон ${microphoneSelect.options.length}`;
+                microphoneSelect.appendChild(option);
+            });
+            
+            // Заполняем список динамиков/наушников
+            audioDevices.speakers.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Динамики ${speakerSelect.options.length}`;
+                speakerSelect.appendChild(option);
+            });
+        }
+
+        async function changeMicrophone(deviceId) {
+            if (!localStream) return;
+            
+            try {
+                // Останавливаем текущие аудио треки
+                localStream.getAudioTracks().forEach(track => track.stop());
+                
+                // Получаем новый поток с выбранным микрофоном
+                const newStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { deviceId: deviceId ? { exact: deviceId } : undefined },
+                    video: localStream.getVideoTracks().length > 0
+                });
+                
+                // Заменяем аудио треки в локальном потоке
+                const audioTracks = newStream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    localStream.addTrack(audioTracks[0]);
+                }
+                
+                // Обновляем видео элемент
+                const localVideo = document.getElementById('local-video');
+                localVideo.srcObject = localStream;
+                
+            } catch (error) {
+                console.error('Ошибка смены микрофона:', error);
+                alert('Не удалось сменить микрофон');
+            }
+        }
+
+        function changeSpeaker(deviceId) {
+            const remoteVideo = document.getElementById('remote-video');
+            if (remoteVideo && remoteVideo.setSinkId) {
+                remoteVideo.setSinkId(deviceId)
+                    .catch(error => {
+                        console.error('Ошибка смены динамиков:', error);
+                    });
+            }
+        }
+
+        function setVolume(volume) {
+            const remoteVideo = document.getElementById('remote-video');
+            if (remoteVideo) {
+                remoteVideo.volume = volume / 100;
+            }
+        }
+
+        function toggleAudioSettings() {
+            const audioSettingsPanel = document.getElementById('audio-settings-panel');
+            audioSettingsPanel.classList.toggle('active');
+        }
+
+        function hideAudioSettings() {
+            const audioSettingsPanel = document.getElementById('audio-settings-panel');
+            audioSettingsPanel.classList.remove('active');
         }
 
         // ИСПРАВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ
