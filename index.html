@@ -50,7 +50,7 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: rgba(255, 152, 0, 0.1);
             border-radius: 3px;
         }
 
@@ -67,7 +67,7 @@
         /* Для Firefox */
         * {
             scrollbar-width: thin;
-            scrollbar-color: var(--border-color) transparent;
+            scrollbar-color: var(--border-color) rgba(255, 152, 0, 0.1);
         }
 
         /* Для контейнеров с сообщениями - более тонкий скролл */
@@ -76,11 +76,11 @@
         }
 
         .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(255, 152, 0, 0.3);
         }
 
         [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 152, 0, 0.5);
         }
 
         .messages-container::-webkit-scrollbar-thumb:hover {
@@ -93,7 +93,7 @@
             align-items: center;
             gap: 12px;
             padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 152, 0, 0.05);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
             max-width: 100%;
@@ -102,7 +102,7 @@
         }
 
         .message.sent .file-message {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 152, 0, 0.1);
         }
 
         .file-message:hover {
@@ -210,7 +210,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(255, 152, 0, 0.9);
             display: none;
             align-items: center;
             justify-content: center;
@@ -242,7 +242,7 @@
             border: 2px solid var(--accent-color);
             border-radius: var(--border-radius);
             padding: 0;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.15);
             transform: translateX(400px);
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -264,7 +264,7 @@
 
         .message-notification:hover {
             transform: translateX(0) translateY(-2px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 12px 30px rgba(255, 152, 0, 0.2);
         }
 
         .notification-content {
@@ -526,7 +526,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(255, 152, 0, 0.7);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -846,7 +846,7 @@
 
         /* Баннер активного звонка в чате */
         .active-call-banner {
-            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+            background: linear-gradient(135deg, var(--accent-color), #ff9800);
             color: white;
             padding: 15px 20px;
             border-radius: var(--border-radius);
@@ -855,7 +855,7 @@
             align-items: center;
             justify-content: space-between;
             animation: slideDown 0.3s ease-out;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
         }
 
         @keyframes slideDown {
@@ -1281,7 +1281,7 @@
         };
     </script>
     
-    <title>Hoto Messenger</title>
+    <title>KVASS RP Forum</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -1290,15 +1290,15 @@
         /* === CSS СТИЛИ === */
         :root {
             --primary-bg: #ffffff;
-            --secondary-bg: #f5f5f5;
-            --text-primary: #000000;
+            --secondary-bg: #f8f8f8;
+            --text-primary: #333333;
             --text-secondary: #666666;
-            --accent-color: #404040;
-            --accent-hover: #2d2d2d;
-            --border-color: #d0d0d0;
+            --accent-color: #ff9800;
+            --accent-hover: #f57c00;
+            --border-color: #e0e0e0;
             --success-color: #4caf50;
             --error-color: #f44336;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --shadow: 0 2px 10px rgba(255, 152, 0, 0.1);
             --border-radius: 12px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --mobile-padding: 16px;
@@ -1309,13 +1309,13 @@
 
         [data-theme="dark"] {
             --primary-bg: #1a1a1a;
-            --secondary-bg: #2d2d2d;
+            --secondary-bg: #2a2a2a;
             --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent-color: #808080;
-            --accent-hover: #a0a0a0;
-            --border-color: #404040;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            --text-secondary: #cccccc;
+            --accent-color: #ff9800;
+            --accent-hover: #ffb74d;
+            --border-color: #444444;
+            --shadow: 0 2px 10px rgba(255, 152, 0, 0.2);
         }
 
         * {
@@ -1428,6 +1428,7 @@
             background: var(--secondary-bg);
             transform: scale(1.05);
             filter: grayscale(0%);
+            color: var(--accent-color);
         }
 
         .form-input {
@@ -1469,7 +1470,7 @@
         .logo h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            color: var(--text-primary);
+            color: var(--accent-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1523,6 +1524,7 @@
             margin-bottom: 24px;
             text-align: center;
             font-size: 1.5rem;
+            color: var(--accent-color);
         }
 
         .auth-form .form-input {
@@ -1572,6 +1574,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            color: var(--accent-color);
         }
 
         .app-logo {
@@ -1637,6 +1640,7 @@
             padding: 12px;
             border-radius: var(--border-radius);
             background: var(--primary-bg);
+            border: 1px solid var(--border-color);
         }
 
         .avatar {
@@ -1707,6 +1711,7 @@
             align-items: center;
             touch-action: manipulation;
             filter: grayscale(100%);
+            border: 1px solid transparent;
         }
 
         .nav-btn:hover, 
@@ -1715,6 +1720,7 @@
             color: white;
             transform: translateX(8px);
             filter: grayscale(0%);
+            border-color: var(--accent-color);
         }
 
         .content {
@@ -1765,6 +1771,7 @@
         .section-header h3 {
             font-size: 1.3rem;
             font-weight: 600;
+            color: var(--accent-color);
         }
 
         .chats-list, 
@@ -1784,13 +1791,13 @@
 
         .chats-list::-webkit-scrollbar-thumb,
         .users-list::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(255, 152, 0, 0.2);
             border-radius: 2px;
         }
 
         [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
         [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 152, 0, 0.4);
         }
 
         .chats-list::-webkit-scrollbar-thumb:hover,
@@ -1887,6 +1894,7 @@
         .btn-back:hover {
             background: var(--secondary-bg);
             filter: grayscale(0%);
+            color: var(--accent-color);
         }
 
         .chat-user-info {
@@ -1915,11 +1923,11 @@
             -webkit-overflow-scrolling: touch;
             min-height: 0;
             scrollbar-width: thin;
-            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            scrollbar-color: rgba(255, 152, 0, 0.2) transparent;
         }
 
         [data-theme="dark"] .messages-container {
-            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+            scrollbar-color: rgba(255, 152, 0, 0.4) transparent;
         }
 
         .messages-container::-webkit-scrollbar {
@@ -1932,13 +1940,13 @@
         }
 
         .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(255, 152, 0, 0.2);
             border-radius: 2px;
             transition: var(--transition);
         }
 
         [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 152, 0, 0.4);
         }
 
         .messages-container::-webkit-scrollbar-thumb:hover {
@@ -1972,6 +1980,7 @@
             background: var(--secondary-bg);
             color: var(--text-primary);
             border-bottom-left-radius: 4px;
+            border-left: 3px solid var(--accent-color);
         }
 
         .message-actions {
@@ -2030,8 +2039,8 @@
         }
 
         .message.editing {
-            background: rgba(255, 193, 7, 0.1) !important;
-            border: 2px solid #ffc107 !important;
+            background: rgba(255, 152, 0, 0.1) !important;
+            border: 2px solid var(--accent-color) !important;
         }
 
         .edit-input {
@@ -2225,6 +2234,7 @@
         .modal-title {
             font-size: 1.3rem;
             font-weight: 600;
+            color: var(--accent-color);
         }
 
         .modal-close {
@@ -2242,6 +2252,7 @@
         .modal-close:hover {
             background: var(--secondary-bg);
             filter: grayscale(0%);
+            color: var(--accent-color);
         }
 
         .profile-preview {
@@ -2277,6 +2288,7 @@
             background: var(--secondary-bg);
             border-radius: var(--border-radius);
             min-height: 60px;
+            border-left: 3px solid var(--accent-color);
         }
 
         /* АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
@@ -2690,11 +2702,11 @@
                 <div class="logo">
                     <h1>
                         <div class="logo-icon">
-                            <img src="https://media.discordapp.net/attachments/1285628611449196588/1443631123878904002/image.png?ex=6929c5c1&is=69287441&hm=a2cc46febcb8324ff29e9e0ca86cb9eea2bb447b1b701d83dc97436129126561&=&format=webp&quality=lossless" alt="Hoto Logo">
+                            <span style="color: white; font-size: 28px;">KV</span>
                         </div>
-                        Hoto
+                        KVASS RP
                     </h1>
-                    <p>Мессенджер нового поколения</p>
+                    <p>Форум для Roblox игры KVASS RP</p>
                 </div>
                 
                 <div class="auth-forms">
@@ -2731,9 +2743,9 @@
                 <div class="header-left">
                     <h2 class="app-title">
                         <div class="app-logo">
-                            <img src="https://media.discordapp.net/attachments/1285628611449196588/1443631123878904002/image.png?ex=6929c5c1&is=69287441&hm=a2cc46febcb8324ff29e9e0ca86cb9eea2bb447b1b701d83dc97436129126561&=&format=webp&quality=lossless" alt="Hoto Logo">
+                            <span style="color: white; font-size: 18px;">KV</span>
                         </div>
-                        Hoto
+                        KVASS RP Forum
                     </h2>
                 </div>
                 <div class="header-right">
@@ -3047,7 +3059,7 @@
                     currentUser = user;
                     await loadUserProfile(user.uid);
                     showMainApp();
-                    loadAllUsers();
+                    loadFilteredUsers(); // ИЗМЕНЕНО: Загружаем только отфильтрованных пользователей
                     initNotifications();
                     initCallListeners();
                     initActiveCallListener();
@@ -3057,6 +3069,38 @@
                     cleanupCallListeners();
                 }
             });
+        }
+
+        // ИЗМЕНЕНО: Функция для загрузки только пользователей с нужными email
+        async function loadFilteredUsers() {
+            try {
+                const allowedEmails = ['vzorkin2010@gmail.com', 'support@gmail.com'];
+                const usersQuery = await db.collection('users').where('email', 'in', allowedEmails).get();
+                const chatsContainer = document.getElementById('chats-list');
+                chatsContainer.innerHTML = '';
+
+                if (usersQuery.empty) {
+                    chatsContainer.innerHTML = '<p class="text-center">Нет доступных пользователей</p>';
+                    return;
+                }
+
+                let hasUsers = false;
+                usersQuery.forEach(doc => {
+                    const user = doc.data();
+                    if (doc.id !== currentUser.uid && !user.banned) {
+                        const userElement = createUserElement(user, doc.id);
+                        chatsContainer.appendChild(userElement);
+                        hasUsers = true;
+                    }
+                });
+
+                if (!hasUsers) {
+                    chatsContainer.innerHTML = '<p class="text-center">Нет доступных пользователей</p>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователей:', error);
+                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
+            }
         }
 
         function showBannedScreen(reason) {
@@ -4064,11 +4108,9 @@
             notification.dataset.chatId = chatId;
             
             const firstLetter = sender.nickname ? sender.nickname.charAt(0).toUpperCase() : 'U';
-            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
             const isOfficial = sender.email === 'vzorkin2010@gmail.com' || 
-                               sender.email === 'izbrannoe@gmail.com' || 
-                               sender.email === 'support@gmail.com' ||
-                               sender.email === 'abugay12@mail.ru';
+                               sender.email === 'support@gmail.com';
             
             notification.innerHTML = `
                 <div class="notification-content">
@@ -4083,7 +4125,7 @@
                             ${sender.nickname}
                             ${isOfficial ? `
                                 <span class="official-checkmark">
-                                    <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                                    <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
                                 </span>
                             ` : ''}
                         </div>
@@ -4274,30 +4316,6 @@
         }
 
         // ОСНОВНЫЕ ФУНКЦИИ МЕССЕНДЖЕРА
-        async function loadAllUsers() {
-            try {
-                const usersQuery = await db.collection('users').get();
-                const chatsContainer = document.getElementById('chats-list');
-                chatsContainer.innerHTML = '';
-
-                if (usersQuery.empty) {
-                    chatsContainer.innerHTML = '<p class="text-center">Нет пользователей</p>';
-                    return;
-                }
-
-                usersQuery.forEach(doc => {
-                    const user = doc.data();
-                    if (doc.id !== currentUser.uid && !user.banned) {
-                        const userElement = createUserElement(user, doc.id);
-                        chatsContainer.appendChild(userElement);
-                    }
-                });
-            } catch (error) {
-                console.error('Ошибка загрузки пользователей:', error);
-                document.getElementById('chats-list').innerHTML = '<p class="text-center">Ошибка загрузки</p>';
-            }
-        }
-
         async function searchUsers() {
             const query = document.getElementById('search-input').value.trim();
             const resultsContainer = document.getElementById('search-results');
@@ -4348,11 +4366,9 @@
             const firstLetter = user.nickname ? user.nickname.charAt(0).toUpperCase() : 'U';
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
             const isOfficial = user.email === 'vzorkin2010@gmail.com' || 
-                               user.email === 'izbrannoe@gmail.com' || 
-                               user.email === 'support@gmail.com' ||
-                               user.email === 'abugay12@mail.ru';
+                               user.email === 'support@gmail.com';
             
             div.innerHTML = `
                 <div class="avatar">
@@ -4366,7 +4382,7 @@
                         ${user.nickname}
                         ${isOfficial ? `
                             <span class="official-checkmark">
-                                <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                                <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
                             </span>
                         ` : ''}
                     </strong>
@@ -4478,17 +4494,15 @@
             }
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
             const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || 
-                               currentChatUser.email === 'izbrannoe@gmail.com' || 
-                               currentChatUser.email === 'support@gmail.com' ||
-                               currentChatUser.email === 'abugay12@mail.ru';
+                               currentChatUser.email === 'support@gmail.com';
             
             document.getElementById('chat-username').innerHTML = `
                 ${currentChatUser.nickname}
                 ${isOfficial ? `
                     <span class="official-checkmark">
-                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                        <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
                     </span>
                 ` : ''}
             `;
@@ -4530,11 +4544,9 @@
             const firstLetter = currentChatUser.nickname ? currentChatUser.nickname.charAt(0).toUpperCase() : 'U';
             
             // Проверяем, является ли пользователь официальным аккаунтом
-            // ДОБАВЛЕН support@gmail.com и abugay12@mail.ru в список официальных аккаунтов
+            // ДОБАВЛЕН support@gmail.com в список официальных аккаунтов
             const isOfficial = currentChatUser.email === 'vzorkin2010@gmail.com' || 
-                               currentChatUser.email === 'izbrannoe@gmail.com' || 
-                               currentChatUser.email === 'support@gmail.com' ||
-                               currentChatUser.email === 'abugay12@mail.ru';
+                               currentChatUser.email === 'support@gmail.com';
             
             const modalAvatar = document.getElementById('modal-avatar');
             if (currentChatUser.avatarURL) {
@@ -4547,7 +4559,7 @@
                 ${currentChatUser.nickname || 'Неизвестно'}
                 ${isOfficial ? `
                     <span class="official-checkmark">
-                        <span class="official-tooltip">Официальный аккаунт или же модификация мессенджера Hoto</span>
+                        <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
                     </span>
                 ` : ''}
             `;
