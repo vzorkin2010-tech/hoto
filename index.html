@@ -50,7 +50,7 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(255, 152, 0, 0.1);
+            background: rgba(67, 97, 238, 0.1);
             border-radius: 3px;
         }
 
@@ -67,7 +67,7 @@
         /* Для Firefox */
         * {
             scrollbar-width: thin;
-            scrollbar-color: var(--border-color) rgba(255, 152, 0, 0.1);
+            scrollbar-color: var(--border-color) rgba(67, 97, 238, 0.1);
         }
 
         /* Для контейнеров с сообщениями - более тонкий скролл */
@@ -76,11 +76,11 @@
         }
 
         .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.3);
+            background: rgba(67, 97, 238, 0.3);
         }
 
         [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.5);
+            background: rgba(67, 97, 238, 0.5);
         }
 
         .messages-container::-webkit-scrollbar-thumb:hover {
@@ -93,7 +93,7 @@
             align-items: center;
             gap: 12px;
             padding: 12px;
-            background: rgba(255, 152, 0, 0.05);
+            background: rgba(67, 97, 238, 0.05);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
             max-width: 100%;
@@ -102,7 +102,7 @@
         }
 
         .message.sent .file-message {
-            background: rgba(255, 152, 0, 0.1);
+            background: rgba(67, 97, 238, 0.1);
         }
 
         .file-message:hover {
@@ -210,7 +210,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 152, 0, 0.9);
+            background: rgba(67, 97, 238, 0.9);
             display: none;
             align-items: center;
             justify-content: center;
@@ -242,7 +242,7 @@
             border: 2px solid var(--accent-color);
             border-radius: var(--border-radius);
             padding: 0;
-            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.15);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.15);
             transform: translateX(400px);
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -264,7 +264,7 @@
 
         .message-notification:hover {
             transform: translateX(0) translateY(-2px);
-            box-shadow: 0 12px 30px rgba(255, 152, 0, 0.2);
+            box-shadow: 0 12px 30px rgba(67, 97, 238, 0.2);
         }
 
         .notification-content {
@@ -526,7 +526,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 152, 0, 0.7);
+            background: rgba(67, 97, 238, 0.7);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -846,7 +846,7 @@
 
         /* Баннер активного звонка в чате */
         .active-call-banner {
-            background: linear-gradient(135deg, var(--accent-color), #ff9800);
+            background: linear-gradient(135deg, var(--accent-color), #4361ee);
             color: white;
             padding: 15px 20px;
             border-radius: var(--border-radius);
@@ -855,7 +855,7 @@
             align-items: center;
             justify-content: space-between;
             animation: slideDown 0.3s ease-out;
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
         }
 
         @keyframes slideDown {
@@ -1281,7 +1281,7 @@
         };
     </script>
     
-    <title>KVASS RP Forum</title>
+    <title>VZ.FORUM | Мессенджер</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -1290,15 +1290,15 @@
         /* === CSS СТИЛИ === */
         :root {
             --primary-bg: #ffffff;
-            --secondary-bg: #f8f8f8;
-            --text-primary: #333333;
-            --text-secondary: #666666;
-            --accent-color: #ff9800;
-            --accent-hover: #f57c00;
-            --border-color: #e0e0e0;
-            --success-color: #4caf50;
-            --error-color: #f44336;
-            --shadow: 0 2px 10px rgba(255, 152, 0, 0.1);
+            --secondary-bg: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-color: #4361ee;
+            --accent-hover: #3a56d4;
+            --border-color: #e9ecef;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --shadow: 0 2px 10px rgba(67, 97, 238, 0.1);
             --border-radius: 12px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --mobile-padding: 16px;
@@ -1308,14 +1308,14 @@
         }
 
         [data-theme="dark"] {
-            --primary-bg: #1a1a1a;
-            --secondary-bg: #2a2a2a;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --accent-color: #ff9800;
-            --accent-hover: #ffb74d;
-            --border-color: #444444;
-            --shadow: 0 2px 10px rgba(255, 152, 0, 0.2);
+            --primary-bg: #121212;
+            --secondary-bg: #1e1e1e;
+            --text-primary: #e9ecef;
+            --text-secondary: #adb5bd;
+            --accent-color: #4361ee;
+            --accent-hover: #5a7dff;
+            --border-color: #2d2d2d;
+            --shadow: 0 2px 10px rgba(67, 97, 238, 0.2);
         }
 
         * {
@@ -1791,13 +1791,13 @@
 
         .chats-list::-webkit-scrollbar-thumb,
         .users-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.2);
+            background: rgba(67, 97, 238, 0.2);
             border-radius: 2px;
         }
 
         [data-theme="dark"] .chats-list::-webkit-scrollbar-thumb,
         [data-theme="dark"] .users-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.4);
+            background: rgba(67, 97, 238, 0.4);
         }
 
         .chats-list::-webkit-scrollbar-thumb:hover,
@@ -1923,11 +1923,11 @@
             -webkit-overflow-scrolling: touch;
             min-height: 0;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255, 152, 0, 0.2) transparent;
+            scrollbar-color: rgba(67, 97, 238, 0.2) transparent;
         }
 
         [data-theme="dark"] .messages-container {
-            scrollbar-color: rgba(255, 152, 0, 0.4) transparent;
+            scrollbar-color: rgba(67, 97, 238, 0.4) transparent;
         }
 
         .messages-container::-webkit-scrollbar {
@@ -1940,13 +1940,13 @@
         }
 
         .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.2);
+            background: rgba(67, 97, 238, 0.2);
             border-radius: 2px;
             transition: var(--transition);
         }
 
         [data-theme="dark"] .messages-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 152, 0, 0.4);
+            background: rgba(67, 97, 238, 0.4);
         }
 
         .messages-container::-webkit-scrollbar-thumb:hover {
@@ -2039,7 +2039,7 @@
         }
 
         .message.editing {
-            background: rgba(255, 152, 0, 0.1) !important;
+            background: rgba(67, 97, 238, 0.1) !important;
             border: 2px solid var(--accent-color) !important;
         }
 
@@ -2702,11 +2702,11 @@
                 <div class="logo">
                     <h1>
                         <div class="logo-icon">
-                            <span style="color: white; font-size: 28px;">KV</span>
+                            <span style="color: white; font-size: 28px;">VZ</span>
                         </div>
-                        KVASS RP
+                        VZ.FORUM
                     </h1>
-                    <p>Форум для Roblox игры KVASS RP</p>
+                    <p>Современный мессенджер для общения</p>
                 </div>
                 
                 <div class="auth-forms">
@@ -2743,9 +2743,9 @@
                 <div class="header-left">
                     <h2 class="app-title">
                         <div class="app-logo">
-                            <span style="color: white; font-size: 18px;">KV</span>
+                            <span style="color: white; font-size: 18px;">VZ</span>
                         </div>
-                        KVASS RP Forum
+                        VZ.FORUM
                     </h2>
                 </div>
                 <div class="header-right">
@@ -4125,7 +4125,7 @@
                             ${sender.nickname}
                             ${isOfficial ? `
                                 <span class="official-checkmark">
-                                    <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
+                                    <span class="official-tooltip">Официальный аккаунт форума VZ.FORUM</span>
                                 </span>
                             ` : ''}
                         </div>
@@ -4382,7 +4382,7 @@
                         ${user.nickname}
                         ${isOfficial ? `
                             <span class="official-checkmark">
-                                <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
+                                <span class="official-tooltip">Официальный аккаунт форума VZ.FORUM</span>
                             </span>
                         ` : ''}
                     </strong>
@@ -4502,7 +4502,7 @@
                 ${currentChatUser.nickname}
                 ${isOfficial ? `
                     <span class="official-checkmark">
-                        <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
+                        <span class="official-tooltip">Официальный аккаунт форума VZ.FORUM</span>
                     </span>
                 ` : ''}
             `;
@@ -4559,7 +4559,7 @@
                 ${currentChatUser.nickname || 'Неизвестно'}
                 ${isOfficial ? `
                     <span class="official-checkmark">
-                        <span class="official-tooltip">Официальный аккаунт форума KVASS RP</span>
+                        <span class="official-tooltip">Официальный аккаунт форума VZ.FORUM</span>
                     </span>
                 ` : ''}
             `;
