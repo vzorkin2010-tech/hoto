@@ -86,30 +86,11 @@
         .sidebar { width: 340px; background: var(--bg-sidebar); display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; backdrop-filter: blur(10px); }
         .sidebar-header { padding: 24px; display: flex; align-items: center; justify-content: space-between; }
         
-        /* --- AVATAR FIXES START --- */
         .user-mini { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px 12px; border-radius: var(--radius-md); transition: var(--trans); }
         .user-mini:hover { background: var(--bg-hover); }
         
-        .avatar { 
-            width: 44px; height: 44px; 
-            border-radius: 50%; 
-            background: linear-gradient(135deg, #3f3f46, #27272a); 
-            color: var(--text-main); 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: 700; font-size: 16px; 
-            overflow: hidden; /* Обрезает все лишнее */
-            flex-shrink: 0; 
-            border: 1px solid rgba(255,255,255,0.1); 
-        }
-        
-        /* Изображение внутри аватарки - заполняет весь круг и обрезается */
-        .avatar img { 
-            width: 100%; height: 100%; 
-            object-fit: cover; /* Ключевое свойство */
-            display: block;
-        }
-
-        /* --- AVATAR FIXES END --- */
+        .avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #3f3f46, #27272a); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .nav-tabs { display: flex; padding: 0 24px 10px; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .nav-tab { font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; padding-bottom: 10px; position: relative; transition: var(--trans); }
@@ -120,29 +101,14 @@
         .chat-item:hover { background: var(--bg-hover); transform: translateX(4px); }
         .chat-name { font-weight: 600; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 5px; }
         .chat-last { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
-        .badge-official { color: var(--accent); }
         
         .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; background: transparent; }
         .chat-topbar { height: 75px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); z-index: 10; cursor: pointer; }
         .messages-list { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         
         .msg-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; max-width: 75%; }
-        
-        /* Mini Avatar in Chat */
-        .msg-avatar { 
-            width: 32px; height: 32px; 
-            border-radius: 50%; 
-            background: var(--bg-element); 
-            flex-shrink: 0; 
-            overflow: hidden; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 12px; font-weight: bold; 
-        }
-        .msg-avatar img { 
-            width: 100%; height: 100%; 
-            object-fit: cover; 
-            display: block;
-        }
+        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-element); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .msg-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .msg { padding: 12px 18px; border-radius: 20px; position: relative; font-size: 15px; line-height: 1.5; animation: fadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); word-wrap: break-word; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .msg.in { align-self: flex-start; background: var(--bg-element); color: var(--text-main); border-bottom-left-radius: 4px; max-width: 100%; }
@@ -156,38 +122,13 @@
         .modal-panel { background: var(--bg-modal); width: 90%; max-width: 450px; padding: 0; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 60px rgba(0,0,0,0.5); transform: scale(0.95) translateY(10px); transition: var(--trans); display: flex; flex-direction: column; max-height: 85vh; overflow: hidden; position: relative; }
         .modal-bg.active .modal-panel { transform: scale(1) translateY(0); }
         
-        /* --- BANNER FIXES --- */
-        .profile-banner { 
-            width: 100%; height: 130px; 
-            background-color: var(--accent-glow); 
-            background-size: cover; /* Заполняет всю область */
-            background-position: center; /* Центрирует */
-            background-repeat: no-repeat;
-            position: relative; 
-        }
+        .profile-banner { width: 100%; height: 130px; background-color: var(--accent-glow); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; }
         .profile-banner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
         .profile-banner:hover .profile-banner-overlay { opacity: 1; }
-        
         .profile-header { padding: 0 30px; margin-top: -50px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; }
         .avatar-large-wrapper { position: relative; padding: 4px; background: var(--bg-modal); border-radius: 50%; }
-        
-        .avatar-big { 
-            width: 100px; height: 100px; 
-            border-radius: 50%; 
-            background: var(--bg-element); 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 36px; 
-            position: relative; 
-            overflow: hidden; /* Обрезка кругом */
-        }
-        
-        /* Большое фото профиля */
-        .avatar-big img {
-            width: 100%; height: 100%;
-            object-fit: cover; /* Не сплющивает */
-            display: block;
-        }
-
+        .avatar-big { width: 100px; height: 100px; border-radius: 50%; background: var(--bg-element); display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; overflow: hidden; }
+        .avatar-big img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: var(--trans); cursor: pointer; color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
         .avatar-big:hover .avatar-overlay { opacity: 1; }
         .profile-body { padding: 20px 30px 30px; }
@@ -450,6 +391,7 @@
         
         function logout() { 
             if(chatsListener) chatsListener(); // STOP LISTENER
+            if(messagesListener) messagesListener();
             auth.signOut(); 
             window.location.reload(); 
         }
@@ -467,8 +409,8 @@
                 // 1. Collect Data
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // IGNORE GROUPS - ONLY DM
-                    if(data.type !== 'group' && data.lastMessage) {
+                    // Groups without messages are valid too
+                    if(data.type === 'group' || data.lastMessage) {
                         chats.push({ id: doc.id, ...data });
                     }
                 });
@@ -490,8 +432,12 @@
                 
                 // 4. Render
                 for(const chat of chats) {
-                    let name, avatar, badge = '';
+                    let name, avatar;
                     
+                    // GROUP LOGIC IGNORED - ONLY DIRECT MESSAGES
+                    // So I should SKIP group chats in this loop.
+                    if (chat.type === 'group') continue; 
+
                     const otherId = chat.participants.find(id => id !== currentUser.uid); 
                     if(!otherId) continue; 
                     
@@ -499,14 +445,13 @@
                     const uData = uSnap.data() || { nickname: 'Unknown' };
                     name = uData.nickname; 
                     avatar = uData.avatarURL;
-                    if(['vzorkin2010@gmail.com','support@gmail.com'].includes(uData.email)) { badge = '<span class="badge-official">✓</span>'; }
                     
                     const time = chat.lastMessageTime ? new Date(chat.lastMessageTime.toDate()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
                     
                     const div = document.createElement('div'); 
                     div.className = 'chat-item'; 
                     div.onclick = () => openChat(chat);
-                    div.innerHTML = `<div class="avatar">${avatar ? `<img src="${avatar}">` : name?name[0]:'?'}</div><div style="flex:1; overflow:hidden;"><div style="display:flex; justify-content:space-between; margin-bottom:4px;"><div class="chat-name">${name} ${badge}</div><div style="font-size:11px; color:var(--text-muted);">${time}</div></div><div class="chat-last">${chat.lastMessage || 'Нет сообщений'}</div></div>`;
+                    div.innerHTML = `<div class="avatar">${avatar ? `<img src="${avatar}">` : name?name[0]:'?'}</div><div style="flex:1; overflow:hidden;"><div style="display:flex; justify-content:space-between; margin-bottom:4px;"><div class="chat-name">${name}</div><div style="font-size:11px; color:var(--text-muted);">${time}</div></div><div class="chat-last">${chat.lastMessage || 'Нет сообщений'}</div></div>`;
                     list.appendChild(div);
                 }
             });
@@ -524,15 +469,15 @@
             switchTab('chats');
         }
 
+        // --- CHAT LOGIC ---
         async function openChat(chat) {
             currentChatData = chat; currentChat = { id: chat.id, type: chat.type };
             const hName = document.getElementById('header-name'); const hSub = document.getElementById('header-sub'); const hAv = document.getElementById('header-avatar');
             
-            // CLEAR PREVIOUS STATE
             hName.textContent = '...'; hAv.innerHTML = '';
             
+            // SINCE GROUPS ARE GONE, WE ONLY HANDLE DM
             const otherId = chat.participants.find(id => id !== currentUser.uid); 
-            // FETCH FRESH DATA
             const uSnap = await db.collection('users').doc(otherId).get(); 
             const uData = uSnap.data(); 
             currentChat.otherUser = uData;
@@ -540,7 +485,7 @@
             hName.textContent = uData.nickname; 
             hSub.textContent = '@'+uData.username; 
             hAv.innerHTML = uData.avatarURL ? `<img src="${uData.avatarURL}">` : uData.nickname[0];
-            
+
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden-mobile');
             document.getElementById('empty-state').classList.add('hidden'); document.getElementById('chat-view').classList.remove('hidden');
             loadMessages(chat.id);
