@@ -10,7 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <style>
         :root {
             --bg-body: #09090b;       
@@ -89,8 +88,23 @@
         .user-mini { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px 12px; border-radius: var(--radius-md); transition: var(--trans); }
         .user-mini:hover { background: var(--bg-hover); }
         
-        .avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #3f3f46, #27272a); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .avatar { 
+            width: 44px; height: 44px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #3f3f46, #27272a); 
+            color: var(--text-main); 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 700; font-size: 16px; 
+            overflow: hidden; 
+            flex-shrink: 0; 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        
+        .avatar img { 
+            width: 100%; height: 100%; 
+            object-fit: cover; 
+            display: block;
+        }
 
         .nav-tabs { display: flex; padding: 0 24px 10px; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .nav-tab { font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; padding-bottom: 10px; position: relative; transition: var(--trans); }
@@ -107,8 +121,21 @@
         .messages-list { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         
         .msg-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; max-width: 75%; }
-        .msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-element); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-        .msg-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        
+        .msg-avatar { 
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            background: var(--bg-element); 
+            flex-shrink: 0; 
+            overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 12px; font-weight: bold; 
+        }
+        .msg-avatar img { 
+            width: 100%; height: 100%; 
+            object-fit: cover; 
+            display: block;
+        }
 
         .msg { padding: 12px 18px; border-radius: 20px; position: relative; font-size: 15px; line-height: 1.5; animation: fadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); word-wrap: break-word; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .msg.in { align-self: flex-start; background: var(--bg-element); color: var(--text-main); border-bottom-left-radius: 4px; max-width: 100%; }
@@ -122,13 +149,35 @@
         .modal-panel { background: var(--bg-modal); width: 90%; max-width: 450px; padding: 0; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 25px 60px rgba(0,0,0,0.5); transform: scale(0.95) translateY(10px); transition: var(--trans); display: flex; flex-direction: column; max-height: 85vh; overflow: hidden; position: relative; }
         .modal-bg.active .modal-panel { transform: scale(1) translateY(0); }
         
-        .profile-banner { width: 100%; height: 130px; background-color: var(--accent-glow); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative; }
+        .profile-banner { 
+            width: 100%; height: 130px; 
+            background-color: var(--accent-glow); 
+            background-size: cover; 
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative; 
+        }
         .profile-banner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); opacity: 0; transition: 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
         .profile-banner:hover .profile-banner-overlay { opacity: 1; }
+        
         .profile-header { padding: 0 30px; margin-top: -50px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; }
         .avatar-large-wrapper { position: relative; padding: 4px; background: var(--bg-modal); border-radius: 50%; }
-        .avatar-big { width: 100px; height: 100px; border-radius: 50%; background: var(--bg-element); display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; overflow: hidden; }
-        .avatar-big img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        
+        .avatar-big { 
+            width: 100px; height: 100px; 
+            border-radius: 50%; 
+            background: var(--bg-element); 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 36px; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .avatar-big img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: var(--trans); cursor: pointer; color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
         .avatar-big:hover .avatar-overlay { opacity: 1; }
         .profile-body { padding: 20px 30px 30px; }
@@ -142,6 +191,12 @@
         .t-purple { background: linear-gradient(135deg, #d946ef, #8b5cf6); }
         .t-green { background: linear-gradient(135deg, #4ade80, #22c55e); }
         
+        .select-user-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; cursor: pointer; margin-bottom: 5px; transition: 0.2s; background: rgba(255,255,255,0.02); }
+        .select-user-item:hover { background: var(--bg-hover); }
+        .select-user-item.selected { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--accent); }
+        .checkmark { width: 20px; height: 20px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0; transition: var(--trans); }
+        .select-user-item.selected .checkmark { border-color: var(--accent); background: var(--accent); color: #000; font-size: 12px; }
+
         .file-card { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); text-decoration: none; color: inherit; transition: 0.2s; max-width: 100%; }
         .file-card:hover { background: rgba(0,0,0,0.3); border-color: var(--accent); }
         .file-icon { font-size: 24px; }
@@ -196,6 +251,7 @@
                     <div class="avatar" id="my-avatar-mini">U</div>
                     <div><div style="font-weight: 700; font-size: 15px;" id="my-nickname-mini">User</div><div style="font-size: 11px; color: var(--accent);">● В сети</div></div>
                 </div>
+                <button class="icon-btn" onclick="openCreateGroupModal()" title="Создать группу" style="color: var(--accent); background: rgba(255,255,255,0.05);">+</button>
             </div>
             <div class="nav-tabs">
                 <div class="nav-tab active" onclick="switchTab('chats')">Сообщения</div>
@@ -249,6 +305,55 @@
             <button class="btn btn-ghost" onclick="triggerEditFromModal()" style="margin-bottom: 12px; width: 100%; justify-content: center; background: rgba(255,255,255,0.05);">✏️ Изменить</button>
             <button class="btn btn-danger" onclick="triggerDeleteFromModal()" style="width: 100%; justify-content: center;">🗑 Удалить</button>
             <button class="btn btn-ghost" onclick="closeModal('msg-options-modal')" style="margin-top: 15px; width: 100%;">Отмена</button>
+        </div>
+    </div>
+
+    <div id="create-group-modal" class="modal-bg">
+        <div class="modal-panel">
+            <h3 style="text-align: center; margin-bottom: 20px;">Создать группу</h3>
+            <div class="avatar-big"><div id="new-group-avatar-preview">G</div><label class="avatar-overlay"><input type="file" onchange="previewGroupAvatar(this.files[0])" hidden accept="image/*">ФОТО</label></div>
+            <div class="input-group"><span class="input-icon">👥</span><input type="text" id="new-group-name" placeholder="Название группы"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">ВЫБЕРИТЕ УЧАСТНИКОВ:</div>
+            <div id="eligible-users-list" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-ghost" style="flex: 1;" onclick="closeModal('create-group-modal')">Отмена</button>
+                <button class="btn btn-primary" style="flex: 1;" onclick="createGroup()">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-member-modal" class="modal-bg">
+        <div class="modal-panel">
+            <h3 style="text-align: center; margin: 20px 0;">Добавить участника</h3>
+            <div style="padding: 0 30px 30px; display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">ДОСТУПНЫЕ КОНТАКТЫ:</div>
+                <div id="add-eligible-list" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-ghost" style="flex: 1;" onclick="closeModal('add-member-modal')">Отмена</button>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="submitAddMembers()">Добавить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="group-info-modal" class="modal-bg">
+        <div class="modal-panel">
+            <h3 style="text-align: center; margin: 20px 0;">Настройки группы</h3>
+            <div style="padding: 0 30px 30px; display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div class="avatar-big" style="margin: 0 auto 20px;"><div id="group-info-avatar">G</div><label class="avatar-overlay" id="group-avatar-edit-label" style="display: none;"><input type="file" onchange="uploadGroupAvatar(this.files[0])" hidden accept="image/*">ИЗМЕНИТЬ</label></div>
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="group-info-name" disabled style="text-align: center; font-weight: 700; margin-bottom: 10px; background: transparent; border: none; font-size: 18px;">
+                    <button id="group-save-name-btn" class="btn btn-primary hidden" style="width: 100%; margin-bottom: 10px;" onclick="saveGroupName()">Сохранить название</button>
+                    <button id="group-add-member-btn" class="btn btn-ghost hidden" style="width: 100%; border: 1px solid var(--accent); color: var(--accent);" onclick="openAddMemberModal()">+ Добавить участника</button>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">УЧАСТНИКИ:</div>
+                <div id="group-participants-list" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                <div id="admin-group-actions" class="hidden" style="margin-bottom: 10px;">
+                    <button class="btn btn-danger" style="width: 100%;" onclick="deleteGroup()">Удалить группу</button>
+                </div>
+                <button class="btn btn-ghost" style="width: 100%;" onclick="leaveGroup()">Покинуть группу</button>
+                <button class="btn btn-ghost" style="width: 100%; margin-top: 10px;" onclick="closeModal('group-info-modal')">Закрыть</button>
+            </div>
         </div>
     </div>
 
@@ -312,6 +417,7 @@
         const GOFILE_API_TOKEN = "BppkhLswk2sxwwcaCqthzQLw87BWcUu1";
 
         let currentUser = null, currentChat = null, currentChatData = null, chatsListener = null, messagesListener = null;
+        let selectedGroupParticipants = [], selectedNewMembers = [], groupAvatarFile = null;
         let editMsgId = null, tempActionMsgId = null, tempActionMsgText = null;
         let userCache = {}; // Cache user data to avoid redundant fetches
 
@@ -433,18 +539,19 @@
                 // 4. Render
                 for(const chat of chats) {
                     let name, avatar;
-                    
-                    // GROUP LOGIC IGNORED - ONLY DIRECT MESSAGES
-                    // So I should SKIP group chats in this loop.
-                    if (chat.type === 'group') continue; 
-
-                    const otherId = chat.participants.find(id => id !== currentUser.uid); 
-                    if(!otherId) continue; 
-                    
-                    const uSnap = await db.collection('users').doc(otherId).get(); 
-                    const uData = uSnap.data() || { nickname: 'Unknown' };
-                    name = uData.nickname; 
-                    avatar = uData.avatarURL;
+                    if (chat.type === 'group') { 
+                        name = chat.groupName; 
+                        avatar = chat.groupAvatar; 
+                    } 
+                    else {
+                        const otherId = chat.participants.find(id => id !== currentUser.uid); 
+                        if(!otherId) continue; 
+                        
+                        const uSnap = await db.collection('users').doc(otherId).get(); 
+                        const uData = uSnap.data() || { nickname: 'Unknown' };
+                        name = uData.nickname; 
+                        avatar = uData.avatarURL;
+                    }
                     
                     const time = chat.lastMessageTime ? new Date(chat.lastMessageTime.toDate()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
                     
@@ -469,23 +576,171 @@
             switchTab('chats');
         }
 
-        // --- CHAT LOGIC ---
+        async function openCreateGroupModal() {
+            selectedGroupParticipants = []; document.getElementById('new-group-name').value = '';
+            const list = document.getElementById('eligible-users-list'); list.innerHTML = 'Загрузка...';
+            const chatsSnap = await db.collection('chats').where('participants', 'array-contains', currentUser.uid).get();
+            const friendIds = new Set();
+            chatsSnap.forEach(doc => { const d = doc.data(); if (d.type !== 'group' && d.lastMessage) { const other = d.participants.find(p => p !== currentUser.uid); if (other) friendIds.add(other); } });
+            list.innerHTML = '';
+            for(const uid of friendIds) {
+                const uSnap = await db.collection('users').doc(uid).get();
+                if(uSnap.exists) {
+                    const u = uSnap.data(); const item = document.createElement('div'); item.className = 'select-user-item';
+                    item.onclick = () => { item.classList.toggle('selected'); if(item.classList.contains('selected')) selectedGroupParticipants.push(uid); else selectedGroupParticipants = selectedGroupParticipants.filter(id => id !== uid); };
+                    item.innerHTML = `<div class="checkmark">✓</div><div class="avatar" style="width:32px;height:32px;font-size:12px;">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div>${u.nickname}</div>`;
+                    list.appendChild(item);
+                }
+            }
+            document.getElementById('create-group-modal').classList.add('active');
+        }
+        function previewGroupAvatar(file) { if(file) { groupAvatarFile = file; const r = new FileReader(); r.onload = e => document.getElementById('new-group-avatar-preview').innerHTML = `<img src="${e.target.result}">`; r.readAsDataURL(file); } }
+        async function createGroup() {
+            const name = document.getElementById('new-group-name').value.trim(); if(!name || selectedGroupParticipants.length === 0) return showToast('Введите данные');
+            let avatarURL = null; if(groupAvatarFile) { avatarURL = await uploadToImgBB(groupAvatarFile); }
+            const parts = [currentUser.uid, ...selectedGroupParticipants];
+            await db.collection('chats').add({ 
+                type: 'group', 
+                groupName: name, 
+                groupAvatar: avatarURL, 
+                adminId: currentUser.uid, 
+                participants: parts, 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                lastMessage: 'Группа создана', 
+                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), // ENSURE SORTING WORKS
+                lastMessageSender: currentUser.uid 
+            });
+            closeModal('create-group-modal');
+        }
+
+        async function openAddMemberModal() {
+            selectedNewMembers = [];
+            const list = document.getElementById('add-eligible-list'); list.innerHTML = 'Загрузка...';
+            const chatsSnap = await db.collection('chats').where('participants', 'array-contains', currentUser.uid).get();
+            const potentialIds = new Set();
+            chatsSnap.forEach(doc => { const d = doc.data(); if (d.type !== 'group' && d.lastMessage) { const other = d.participants.find(p => p !== currentUser.uid); if (other) potentialIds.add(other); } });
+            
+            const existing = new Set(currentChatData.participants);
+            list.innerHTML = '';
+            let count = 0;
+            for(const uid of potentialIds) {
+                if(existing.has(uid)) continue;
+                const uSnap = await db.collection('users').doc(uid).get();
+                if(uSnap.exists) {
+                    count++;
+                    const u = uSnap.data(); const item = document.createElement('div'); item.className = 'select-user-item';
+                    item.onclick = () => { item.classList.toggle('selected'); if(item.classList.contains('selected')) selectedNewMembers.push(uid); else selectedNewMembers = selectedNewMembers.filter(id => id !== uid); };
+                    item.innerHTML = `<div class="checkmark">✓</div><div class="avatar" style="width:32px;height:32px;font-size:12px;">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div>${u.nickname}</div>`;
+                    list.appendChild(item);
+                }
+            }
+            if(count === 0) list.innerHTML = '<div style="text-align:center;color:var(--text-muted)">Нет новых контактов</div>';
+            document.getElementById('add-member-modal').classList.add('active');
+        }
+
+        async function submitAddMembers() {
+            if(selectedNewMembers.length === 0) return closeModal('add-member-modal');
+            const newParts = [...currentChatData.participants, ...selectedNewMembers];
+            
+            // 1. UPDATE PARTICIPANTS
+            await db.collection('chats').doc(currentChat.id).update({ participants: newParts });
+            
+            // 2. ADD MESSAGE
+            await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
+                text: `${currentUser.nickname} добавил участников`, 
+                isSystem: true, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+
+            // 3. FORCE UPDATE LAST MESSAGE (To bump chat for new user)
+            await db.collection('chats').doc(currentChat.id).update({ 
+                lastMessage: `${currentUser.nickname} добавил участников`,
+                lastMessageTime: firebase.firestore.FieldValue.serverTimestamp() 
+            });
+
+            closeModal('add-member-modal');
+            openGroupSettings(); 
+        }
+
+        async function openGroupSettings() {
+            const doc = await db.collection('chats').doc(currentChat.id).get(); if (!doc.exists) return; currentChatData = { id: doc.id, ...doc.data() }; 
+            const isAdmin = currentChatData.adminId === currentUser.uid;
+            document.getElementById('group-info-name').value = currentChatData.groupName; document.getElementById('group-info-name').disabled = !isAdmin;
+            document.getElementById('group-save-name-btn').classList.toggle('hidden', !isAdmin); document.getElementById('group-add-member-btn').classList.toggle('hidden', !isAdmin);
+            document.getElementById('group-avatar-edit-label').style.display = isAdmin ? 'flex' : 'none';
+            document.getElementById('admin-group-actions').classList.toggle('hidden', !isAdmin);
+            document.getElementById('group-info-avatar').innerHTML = currentChatData.groupAvatar ? `<img src="${currentChatData.groupAvatar}">` : currentChatData.groupName[0];
+            const list = document.getElementById('group-participants-list'); list.innerHTML = 'Загрузка...';
+            let html = '';
+            for(const uid of currentChatData.participants) {
+                const uSnap = await db.collection('users').doc(uid).get(); const u = uSnap.data();
+                const isMe = uid === currentUser.uid;
+                const actions = (isAdmin && !isMe) ? `<div class="admin-actions-mini"><button class="mini-btn btn-promote" onclick="transferAdmin('${uid}', '${u.nickname}')">👑</button><button class="mini-btn btn-kick" onclick="kickUser('${uid}', '${u.nickname}')">🚫</button></div>` : '';
+                html += `<div class="participant-item"><div class="avatar" style="width:32px;height:32px;font-size:12px;">${u.avatarURL?`<img src="${u.avatarURL}">`:u.nickname[0]}</div><div style="font-size:14px;">${u.nickname} ${currentChatData.adminId===uid?'<span style="color:var(--accent);font-size:10px;">(админ)</span>':''}</div>${actions}</div>`;
+            }
+            list.innerHTML = html;
+            document.getElementById('group-info-modal').classList.add('active');
+        }
+
+        async function transferAdmin(uid, nick) { if(confirm(`Сделать ${nick} админом?`)) { await db.collection('chats').doc(currentChat.id).update({ adminId: uid }); openGroupSettings(); } }
+        async function kickUser(uid, nick) { 
+            if(confirm(`Исключить ${nick}?`)) { 
+                const newParts = currentChatData.participants.filter(id => id !== uid); 
+                
+                await db.collection('chats').doc(currentChat.id).update({ participants: newParts }); 
+                
+                await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
+                    text: `${nick} исключен`, 
+                    isSystem: true, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                }); 
+
+                // UPDATE LAST MSG TO REFRESH LIST
+                await db.collection('chats').doc(currentChat.id).update({ 
+                    lastMessage: `${nick} исключен`,
+                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+
+                openGroupSettings(); 
+            } 
+        }
+        async function deleteGroup() { if(confirm('Удалить группу?')) { await db.collection('chats').doc(currentChat.id).delete(); closeModal('group-info-modal'); document.getElementById('chat-view').classList.add('hidden'); document.getElementById('empty-state').classList.remove('hidden'); } }
+        async function leaveGroup() {
+            if(confirm('Покинуть группу?')) {
+                const newParts = currentChatData.participants.filter(p => p !== currentUser.uid);
+                if(newParts.length === 0) await db.collection('chats').doc(currentChat.id).delete();
+                else {
+                    let updates = { participants: newParts }; if(currentChatData.adminId === currentUser.uid) updates.adminId = newParts[0];
+                    await db.collection('chats').doc(currentChat.id).update(updates);
+                }
+                closeModal('group-info-modal'); document.getElementById('chat-view').classList.add('hidden'); document.getElementById('empty-state').classList.remove('hidden');
+            }
+        }
+        async function saveGroupName() { await db.collection('chats').doc(currentChat.id).update({ groupName: document.getElementById('group-info-name').value }); showToast('Сохранено'); }
+        async function uploadGroupAvatar(file) { const u = await uploadToImgBB(file); await db.collection('chats').doc(currentChat.id).update({ groupAvatar: u }); document.getElementById('group-info-avatar').innerHTML = `<img src="${u}">`; document.getElementById('header-avatar').innerHTML = `<img src="${u}">`; }
+
         async function openChat(chat) {
             currentChatData = chat; currentChat = { id: chat.id, type: chat.type };
             const hName = document.getElementById('header-name'); const hSub = document.getElementById('header-sub'); const hAv = document.getElementById('header-avatar');
             
+            // CLEAR PREVIOUS STATE
             hName.textContent = '...'; hAv.innerHTML = '';
             
-            // SINCE GROUPS ARE GONE, WE ONLY HANDLE DM
-            const otherId = chat.participants.find(id => id !== currentUser.uid); 
-            const uSnap = await db.collection('users').doc(otherId).get(); 
-            const uData = uSnap.data(); 
-            currentChat.otherUser = uData;
-            
-            hName.textContent = uData.nickname; 
-            hSub.textContent = '@'+uData.username; 
-            hAv.innerHTML = uData.avatarURL ? `<img src="${uData.avatarURL}">` : uData.nickname[0];
-
+            if(chat.type === 'group') {
+                hName.textContent = chat.groupName; 
+                hSub.textContent = `${chat.participants.length} уч.`; 
+                hAv.innerHTML = chat.groupAvatar ? `<img src="${chat.groupAvatar}">` : chat.groupName[0];
+            } else {
+                const otherId = chat.participants.find(id => id !== currentUser.uid); 
+                // FETCH FRESH DATA
+                const uSnap = await db.collection('users').doc(otherId).get(); 
+                const uData = uSnap.data(); 
+                currentChat.otherUser = uData;
+                
+                hName.textContent = uData.nickname; 
+                hSub.textContent = '@'+uData.username; 
+                hAv.innerHTML = uData.avatarURL ? `<img src="${uData.avatarURL}">` : uData.nickname[0];
+            }
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden-mobile');
             document.getElementById('empty-state').classList.add('hidden'); document.getElementById('chat-view').classList.remove('hidden');
             loadMessages(chat.id);
@@ -603,7 +858,7 @@
             loader.classList.add('hidden'); 
         }
 
-        function openChatInfo() { if(!currentChatData)return; if(currentChat.otherUser) showUserProfile(currentChat.otherUser); }
+        function openChatInfo() { if(!currentChatData)return; if(currentChatData.type==='group') openGroupSettings(); else if(currentChat.otherUser) showUserProfile(currentChat.otherUser); }
         
         function switchTab(t) { document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active')); document.querySelector(`.nav-tab[onclick="switchTab('${t}')"]`).classList.add('active'); document.getElementById('chats-list').classList.toggle('hidden', t!=='chats'); document.getElementById('search-list').classList.toggle('hidden', t!=='search'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
