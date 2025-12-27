@@ -368,7 +368,7 @@
 
         let currentUser = null, currentChat = null, currentChatData = null, chatsListener = null, messagesListener = null;
         let editMsgId = null, tempActionMsgId = null, tempActionMsgText = null;
-        let userCache = {}; // Cache user data to avoid redundant fetches
+        let userCache = {}; 
 
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
@@ -445,7 +445,7 @@
         async function register() { setButtonLoading('btn-register', true, ''); const e = document.getElementById('register-email').value, p = document.getElementById('register-password').value; if(p !== document.getElementById('register-confirm').value) { showToast('Пароли не совпадают'); setButtonLoading('btn-register', false, 'Регистрация'); return; } try { const cred = await auth.createUserWithEmailAndPassword(e, p); await db.collection('users').doc(cred.user.uid).set({ email: e, nickname: e.split('@')[0], username: 'user_'+Math.floor(Math.random()*10000), bio: '', createdAt: firebase.firestore.FieldValue.serverTimestamp(), banned: false }); } catch(err) { showToast(err.message); setButtonLoading('btn-register', false, 'Регистрация'); } }
         
         function logout() { 
-            if(chatsListener) chatsListener(); // STOP LISTENER
+            if(chatsListener) chatsListener(); 
             if(messagesListener) messagesListener();
             auth.signOut(); 
             window.location.reload(); 
@@ -461,23 +461,19 @@
             
             chatsListener = db.collection('chats').where('participants', 'array-contains', currentUser.uid).onSnapshot(async snapshot => {
                 const chats = [];
-                // 1. Collect Data (FILTER OUT GROUPS)
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // IGNORE GROUPS. Only allow direct chats with messages.
                     if((!data.type || data.type !== 'group') && data.lastMessage) {
                         chats.push({ id: doc.id, ...data });
                     }
                 });
                 
-                // 2. Sort (Newest first)
                 chats.sort((a,b) => {
                     const tA = a.lastMessageTime ? a.lastMessageTime.toMillis() : Date.now();
                     const tB = b.lastMessageTime ? b.lastMessageTime.toMillis() : Date.now();
                     return tB - tA;
                 });
                 
-                // 3. Clear List
                 list.innerHTML = '';
                 
                 if(chats.length === 0) { 
@@ -485,10 +481,8 @@
                     return; 
                 }
                 
-                // 4. Render
                 for(const chat of chats) {
                     let name, avatar;
-                    
                     const otherId = chat.participants.find(id => id !== currentUser.uid); 
                     if(!otherId) continue; 
                     
@@ -527,7 +521,6 @@
             
             hName.textContent = '...'; hAv.innerHTML = '';
             
-            // Assume Direct Chat
             const otherId = chat.participants.find(id => id !== currentUser.uid); 
             const uSnap = await db.collection('users').doc(otherId).get(); 
             const uData = uSnap.data(); 
@@ -609,15 +602,23 @@
         }
 
         function renderMsgInnerHtml(d) {
-            let content = d.text;
-            if(d.type === 'file') {
-                if (d.fileType && d.fileType.startsWith('image/')) {
-                    content = `<img src="${d.fileURL}" style="max-width:100%; border-radius:10px; cursor:pointer;" onclick="window.open('${d.fileURL}')">`;
+            let content = d.text || ''; 
+            
+            if(d.type === 'file' && d.fileURL) {
+                const isImage = (d.fileType && d.fileType.startsWith('image/')) || 
+                                (typeof d.fileURL === 'string' && d.fileURL.match(/\.(jpeg|jpg|gif|png|webp|bmp)$/i));
+
+                if (isImage) {
+                    content = `<img src="${d.fileURL}" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Загрузка фото...">`;
                 } else {
-                    content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${d.fileName}</div><div class="file-meta">Открыть</div></div></a>`;
+                    content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${d.fileName || 'Файл'}</div><div class="file-meta">Открыть</div></div></a>`;
                 }
             }
+
             const time = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...';
+            
+            if (!content && d.type !== 'file') content = '<span style="opacity:0.5; font-style:italic;">(пустое сообщение)</span>';
+
             return `${content}<div class="msg-time">${time} ${d.edited ? '• ред.' : ''}</div>`;
         }
 
@@ -638,17 +639,33 @@
                 await db.collection('chats').doc(currentChat.id).update({ lastMessage: txt, lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), lastMessageSender: currentUser.uid });
             }
         }
+        
         async function uploadFiles(files) {
             if(!currentChat) return;
             const loader = document.getElementById('upload-indicator');
             loader.classList.remove('hidden'); 
+            
             for(let file of files) {
                 let url = null;
                 if (file.type.startsWith('image/') && file.size < 32 * 1024 * 1024) { url = await uploadToImgBB(file); } 
                 else { url = await uploadToGofile(file); }
+
                 if (url) {
-                    await db.collection('chats').doc(currentChat.id).collection('messages').add({ type: 'file', fileName: file.name, fileType: file.type, fileURL: url, senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                    await db.collection('chats').doc(currentChat.id).update({ lastMessage: (file.type.startsWith('image/')?'📷 Фото':'📁 Файл'), lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), lastMessageSender: currentUser.uid });
+                    await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
+                        text: '', 
+                        type: 'file', 
+                        fileName: file.name, 
+                        fileType: file.type, 
+                        fileURL: url, 
+                        senderId: currentUser.uid, 
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                    });
+                    
+                    await db.collection('chats').doc(currentChat.id).update({ 
+                        lastMessage: (file.type.startsWith('image/') ? '📷 Фото' : '📁 Файл'), 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        lastMessageSender: currentUser.uid 
+                    });
                 }
             }
             loader.classList.add('hidden'); 
