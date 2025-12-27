@@ -112,6 +112,7 @@
         .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent); transition: var(--trans); }
         .list-wrap { flex: 1; overflow-y: auto; padding: 15px; }
         
+        /* --- NEW: Smooth Animation for List Items --- */
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .chat-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; cursor: pointer; transition: var(--trans); margin-bottom: 4px; animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
         .chat-item:hover { background: var(--bg-hover); transform: translateX(4px); }
@@ -141,14 +142,8 @@
 
         .msg { padding: 12px 18px; border-radius: 20px; position: relative; font-size: 15px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .msg.in { align-self: flex-start; background: var(--bg-element); color: var(--text-main); border-bottom-left-radius: 4px; max-width: 100%; animation: slideIn 0.3s ease forwards; }
-        
-        /* Стили для сообщений в чате (мои) */
         .msg.out { max-width: 70%; align-self: flex-end; background: var(--accent); color: #09090b; border-bottom-right-radius: 4px; font-weight: 600; box-shadow: 0 4px 20px var(--accent-glow); cursor: pointer; transition: 0.2s; margin-bottom: 8px; animation: slideIn 0.3s ease forwards; }
         .msg.out:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
-        /* Стили для новостей (для всех как входящие, но на всю ширину) */
-        .msg.news-post { width: 100%; max-width: 90%; background: var(--bg-element); border-left: 3px solid var(--accent); border-radius: 12px; margin: 0 auto 20px auto; align-self: center; padding: 20px; }
-        
         .msg-time { font-size: 10px; opacity: 0.6; text-align: right; margin-top: 4px; }
         .input-bar { padding: 20px 30px; background: rgba(0,0,0,0.2); display: flex; align-items: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
 
@@ -225,8 +220,8 @@
 <body>
 
     <div id="loading-screen">
-        <div class="loader-spinner"></div>
-        <div style="font-weight: 600; letter-spacing: 2px; color: var(--text-muted); font-size: 14px; margin-top: 20px;">ЗАГРУЗКА...</div>
+        <div class="loader-screen-spinner"></div>
+        <div style="font-weight: 600; letter-spacing: 2px; color: var(--text-muted); font-size: 14px;">ЗАГРУЗКА...</div>
     </div>
 
     <div class="ambient-light light-1"></div>
@@ -262,7 +257,6 @@
             </div>
             <div class="nav-tabs">
                 <div class="nav-tab active" onclick="switchTab('chats')">Сообщения</div>
-                <div class="nav-tab" onclick="switchTab('news')">Новости</div>
                 <div class="nav-tab" onclick="switchTab('search')">Поиск</div>
             </div>
             <div id="chats-list" class="list-wrap"></div>
@@ -290,8 +284,7 @@
                     <button class="icon-btn">⋮</button>
                 </div>
                 <div id="messages-container" class="messages-list"></div>
-                
-                <div class="input-bar" id="input-bar-container">
+                <div class="input-bar">
                     <div id="edit-indicator" class="hidden" style="position: absolute; bottom: 80px; left: 30px; background: var(--bg-modal); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--accent); display: flex; align-items: center; gap: 10px; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                         <span style="font-size: 12px; color: var(--accent); font-weight: bold;">✏️ Редактирование</span>
                         <button onclick="cancelEdit()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
@@ -379,10 +372,7 @@
         let currentUser = null, currentChat = null, currentChatData = null, chatsListener = null, messagesListener = null;
         let editMsgId = null, tempActionMsgId = null, tempActionMsgText = null;
         let userCache = {};
-        let searchTimeout = null;
-        
-        // Context: 'chat' | 'news'
-        let currentContext = 'chat';
+        let searchTimeout = null; // FIX: Debounce
 
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
@@ -390,6 +380,7 @@
             input.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
             input.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
             
+            // FIX: Search debounce
             document.getElementById('search-input').addEventListener('input', e => { 
                 clearTimeout(searchTimeout);
                 const val = e.target.value.trim();
@@ -399,12 +390,6 @@
             
             document.getElementById('file-input').addEventListener('change', e => { if(e.target.files.length) uploadFiles(e.target.files); });
         });
-
-        // ПРОВЕРКА АДМИНА
-        const isAdmin = () => {
-            if (!currentUser) return false;
-            return currentUser.email === 'vzorkin2010@gmail.com' || currentUser.username === 'vzorkin';
-        };
 
         auth.onAuthStateChanged(async user => {
             const loader = document.getElementById('loading-screen');
@@ -428,6 +413,7 @@
             }
         });
 
+        // --- FILE UPLOAD LOGIC ---
         async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append("image", file);
@@ -478,6 +464,7 @@
         }
         function toggleAuth(type) { document.getElementById('login-form').classList.toggle('hidden', type !== 'login'); document.getElementById('register-form').classList.toggle('hidden', type !== 'register'); }
 
+        // --- CHAT LOADING ---
         function loadChats() {
             if(chatsListener) chatsListener(); 
             
@@ -494,6 +481,7 @@
                 });
                 
                 chats.sort((a,b) => {
+                    // FIX: Handle missing timestamps (new messages locally)
                     const tA = a.lastMessageTime ? a.lastMessageTime.toMillis() : Date.now();
                     const tB = b.lastMessageTime ? b.lastMessageTime.toMillis() : Date.now();
                     return tB - tA;
@@ -506,6 +494,7 @@
                     return; 
                 }
                 
+                // Add staggered animation delay
                 let delay = 0;
                 for(const chat of chats) {
                     let name, avatar;
@@ -521,7 +510,7 @@
                     
                     const div = document.createElement('div'); 
                     div.className = 'chat-item'; 
-                    div.style.animationDelay = `${delay}s`;
+                    div.style.animationDelay = `${delay}s`; // Stagger animation
                     delay += 0.05;
 
                     div.onclick = () => openChat(chat);
@@ -540,7 +529,7 @@
                     const u = doc.data(); 
                     const div = document.createElement('div'); 
                     div.className = 'chat-item'; 
-                    div.style.animation = 'none'; div.style.opacity = '1';
+                    div.style.animation = 'none'; div.style.opacity = '1'; // No animation for search results
                     div.onclick = () => createDirectChat(doc.id); 
                     div.innerHTML = `<div class="avatar">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div><div class="chat-name">${u.nickname}</div><div style="font-size:12px;">@${u.username}</div></div>`; 
                     res.appendChild(div); 
@@ -556,94 +545,7 @@
             switchTab('chats');
         }
 
-        // --- ЛОГИКА ВКЛАДОК ---
-        function switchTab(t) { 
-            // Сброс контекста
-            currentContext = (t === 'news') ? 'news' : 'chat';
-            
-            document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active')); 
-            document.querySelector(`.nav-tab[onclick="switchTab('${t}')"]`).classList.add('active'); 
-            
-            // Если Новости
-            if (t === 'news') {
-                document.getElementById('chats-list').classList.add('hidden'); 
-                document.getElementById('search-list').classList.add('hidden');
-                openNewsChannel();
-            } else {
-                // Если Чаты или Поиск
-                document.getElementById('empty-state').classList.remove('hidden'); 
-                document.getElementById('chat-view').classList.add('hidden');
-                
-                document.getElementById('chats-list').classList.toggle('hidden', t!=='chats'); 
-                document.getElementById('search-list').classList.toggle('hidden', t!=='search'); 
-            }
-        }
-
-        // --- ОТКРЫТИЕ КАНАЛА НОВОСТЕЙ ---
-        function openNewsChannel() {
-            currentChat = null; // Мы не в приватном чате
-            if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden-mobile');
-            
-            // UI Setup
-            document.getElementById('empty-state').classList.add('hidden'); 
-            document.getElementById('chat-view').classList.remove('hidden');
-
-            const hName = document.getElementById('header-name'); 
-            const hSub = document.getElementById('header-sub'); 
-            const hAv = document.getElementById('header-avatar');
-            
-            hName.textContent = 'Новости VZ.FORUM'; 
-            hSub.textContent = 'официальный канал'; 
-            hAv.innerHTML = '📢'; // Иконка
-
-            // Проверка прав на отправку
-            const inputBar = document.getElementById('input-bar-container');
-            if (isAdmin()) {
-                inputBar.style.display = 'flex';
-            } else {
-                inputBar.style.display = 'none';
-            }
-
-            // Загрузка сообщений из коллекции новостей
-            loadNewsMessages();
-        }
-
-        function loadNewsMessages() {
-            if(messagesListener) messagesListener();
-            const cont = document.getElementById('messages-container'); cont.innerHTML = '';
-            
-            // Используем отдельную коллекцию 'news_channel'
-            messagesListener = db.collection('news_channel').orderBy('timestamp', 'asc').onSnapshot(snap => {
-                snap.docChanges().forEach(change => {
-                    if(change.type === 'added') renderNewsMessage(change.doc.data(), change.doc.id);
-                    if(change.type === 'modified') { const el = document.getElementById(change.doc.id); if(el) el.innerHTML = renderMsgInnerHtml(change.doc.data()); }
-                    if(change.type === 'removed') { const el = document.getElementById(change.doc.id); if(el) el.remove(); }
-                });
-                scrollToBottom();
-            });
-        }
-
-        function renderNewsMessage(d, id) {
-            const div = document.createElement('div');
-            // Стиль новостного поста
-            div.className = 'msg news-post'; 
-            div.id = id;
-            
-            // Если я админ - могу редактировать/удалять
-            if(isAdmin()) {
-                div.style.cursor = 'pointer';
-                div.onclick = (e) => { e.stopPropagation(); openMsgOptions(id, d.text); };
-            }
-
-            div.innerHTML = renderMsgInnerHtml(d);
-            document.getElementById('messages-container').appendChild(div);
-        }
-
-        // --- ОБЫЧНЫЕ ЧАТЫ ---
         async function openChat(chat) {
-            currentContext = 'chat'; // Убеждаемся, что мы в контексте чата
-            document.getElementById('input-bar-container').style.display = 'flex'; // Всегда показываем в чатах
-
             currentChatData = chat; currentChat = { id: chat.id, type: chat.type };
             const hName = document.getElementById('header-name'); const hSub = document.getElementById('header-sub'); const hAv = document.getElementById('header-avatar');
             
@@ -676,6 +578,7 @@
             });
         }
         
+        // FIX: Scroll Helper
         function scrollToBottom() {
             const cont = document.getElementById('messages-container');
             cont.scrollTop = cont.scrollHeight;
@@ -742,12 +645,14 @@
                                 (typeof d.fileURL === 'string' && d.fileURL.match(/\.(jpeg|jpg|gif|png|webp|bmp)$/i));
 
                 if (isImage) {
+                    // FIX: Trigger scroll on image load
                     content = `<img src="${d.fileURL}" onload="scrollToBottom()" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Загрузка...">`;
                 } else {
                     content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${d.fileName || 'Файл'}</div><div class="file-meta">Открыть</div></div></a>`;
                 }
             }
 
+            // FIX: Timestamp check
             const time = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : 'отправка...';
             
             if (!content && d.type !== 'file') content = '<span style="opacity:0.5; font-style:italic;">(пустое сообщение)</span>';
@@ -760,41 +665,11 @@
         function triggerDeleteFromModal() { closeModal('msg-options-modal'); deleteMessage(tempActionMsgId); }
         function startEdit(id, text) { editMsgId = id; document.getElementById('message-input').value = text; document.getElementById('message-input').focus(); document.getElementById('edit-indicator').classList.remove('hidden'); }
         function cancelEdit() { editMsgId = null; document.getElementById('message-input').value = ''; document.getElementById('edit-indicator').classList.add('hidden'); }
-        
-        // --- ДЕЙСТВИЯ (ОТПРАВКА / УДАЛЕНИЕ) ---
-        
-        async function deleteMessage(id) { 
-            if (currentContext === 'news') {
-                if (isAdmin()) await db.collection('news_channel').doc(id).delete();
-            } else if (currentChat) {
-                await db.collection('chats').doc(currentChat.id).collection('messages').doc(id).delete(); 
-            }
-        }
+        async function deleteMessage(id) { await db.collection('chats').doc(currentChat.id).collection('messages').doc(id).delete(); }
         
         async function handleSend() {
             const inp = document.getElementById('message-input'), txt = inp.value.trim();
-            if(!txt) return;
-            
-            // Если мы в новостях
-            if (currentContext === 'news') {
-                if (!isAdmin()) return; // Защита
-                
-                if(editMsgId) {
-                    await db.collection('news_channel').doc(editMsgId).update({ text: txt, edited: true });
-                    cancelEdit();
-                } else {
-                    inp.value = ''; inp.style.height='auto';
-                    await db.collection('news_channel').add({ 
-                        text: txt, 
-                        senderId: currentUser.uid, 
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                    });
-                }
-                return;
-            }
-
-            // Если мы в чате
-            if(!currentChat) return;
+            if(!txt || !currentChat) return; // FIX: Prevent empty spaces
             
             if(editMsgId) { 
                 await db.collection('chats').doc(currentChat.id).collection('messages').doc(editMsgId).update({ text: txt, edited: true }); 
@@ -808,20 +683,7 @@
         }
         
         async function uploadFiles(files) {
-            // Разделяем логику для чатов и новостей
-            let targetCollection = null;
-            let updateLastMsg = false;
-
-            if (currentContext === 'news') {
-                if (!isAdmin()) return;
-                targetCollection = db.collection('news_channel');
-            } else if (currentChat) {
-                targetCollection = db.collection('chats').doc(currentChat.id).collection('messages');
-                updateLastMsg = true;
-            } else {
-                return;
-            }
-
+            if(!currentChat) return;
             const loader = document.getElementById('upload-indicator');
             loader.classList.remove('hidden'); 
             
@@ -831,7 +693,7 @@
                 else { url = await uploadToGofile(file); }
 
                 if (url) {
-                    await targetCollection.add({ 
+                    await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
                         text: '', 
                         type: 'file', 
                         fileName: file.name, 
@@ -841,33 +703,24 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                     });
                     
-                    if (updateLastMsg && currentChat) {
-                        await db.collection('chats').doc(currentChat.id).update({ 
-                            lastMessage: (file.type.startsWith('image/') ? '📷 Фото' : '📁 Файл'), 
-                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
-                            lastMessageSender: currentUser.uid 
-                        });
-                    }
+                    await db.collection('chats').doc(currentChat.id).update({ 
+                        lastMessage: (file.type.startsWith('image/') ? '📷 Фото' : '📁 Файл'), 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        lastMessageSender: currentUser.uid 
+                    });
                 }
             }
             loader.classList.add('hidden'); 
         }
 
         function openChatInfo() { 
-            if (currentContext === 'news') return;
             if(!currentChatData) return; 
             if(currentChat.otherUser) showUserProfile(currentChat.otherUser); 
         }
         
+        function switchTab(t) { document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active')); document.querySelector(`.nav-tab[onclick="switchTab('${t}')"]`).classList.add('active'); document.getElementById('chats-list').classList.toggle('hidden', t!=='chats'); document.getElementById('search-list').classList.toggle('hidden', t!=='search'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function closeChatMobile(e) { 
-            e.stopPropagation(); 
-            document.getElementById('sidebar').classList.remove('hidden-mobile'); 
-            if (currentContext === 'news') {
-                 // Очистить вью при выходе из новостей на мобильном
-                switchTab('chats');
-            }
-        }
+        function closeChatMobile(e) { e.stopPropagation(); document.getElementById('sidebar').classList.remove('hidden-mobile'); }
         
         function showUserProfile(u) {
             document.getElementById('view-nickname').innerText = u.nickname;
