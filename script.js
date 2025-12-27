@@ -184,15 +184,14 @@ async function uploadFiles(files) {
     loader.classList.add('hidden');
 }
 
-// --- UI HELPERS ---
+// --- UI ---
 function openChatInfo() { if(currentChat.otherUser) showUserProfile(currentChat.otherUser); }
 function showUserProfile(u) {
     document.getElementById('view-nickname').innerText = u.nickname;
     document.getElementById('view-username').innerText = '@'+u.username;
     document.getElementById('view-bio').innerText = u.bio || '...';
     document.getElementById('view-avatar').innerHTML = u.avatarURL?`<img src="${u.avatarURL}">`:u.nickname[0];
-    const bnr = document.getElementById('view-banner');
-    bnr.style.backgroundImage = u.bannerURL ? `url(${u.bannerURL})` : 'none';
+    document.getElementById('view-banner').style.backgroundImage = u.bannerURL ? `url(${u.bannerURL})` : 'none';
     openModal('user-profile-modal');
 }
 function openMyProfile() {
@@ -200,16 +199,15 @@ function openMyProfile() {
     document.getElementById('profile-username').value = currentUser.username;
     document.getElementById('profile-bio').value = currentUser.bio || '';
     document.getElementById('my-profile-avatar-content').innerHTML = currentUser.avatarURL ? `<img src="${currentUser.avatarURL}">` : currentUser.nickname[0];
-    const bnr = document.getElementById('my-banner-preview');
-    bnr.style.backgroundImage = currentUser.bannerURL ? `url(${currentUser.bannerURL})` : 'none';
+    document.getElementById('my-banner-preview').style.backgroundImage = currentUser.bannerURL ? `url(${currentUser.bannerURL})` : 'none';
     openModal('my-profile-modal');
 }
 async function saveProfile() {
     await db.collection('users').doc(currentUser.uid).update({ nickname: document.getElementById('profile-nickname').value, username: document.getElementById('profile-username').value, bio: document.getElementById('profile-bio').value });
     location.reload();
 }
-async function uploadAvatar(f) { const u = await uploadToImgBB(f); await db.collection('users').doc(currentUser.uid).update({ avatarURL: u }); location.reload(); }
-async function uploadBanner(f) { const u = await uploadToImgBB(f); await db.collection('users').doc(currentUser.uid).update({ bannerURL: u }); location.reload(); }
+async function uploadAvatar(f) { const u = await uploadToImgBB(f); if(u) { await db.collection('users').doc(currentUser.uid).update({ avatarURL: u }); location.reload(); } }
+async function uploadBanner(f) { const u = await uploadToImgBB(f); if(u) { await db.collection('users').doc(currentUser.uid).update({ bannerURL: u }); location.reload(); } }
 
 function switchTab(t) { document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active')); document.querySelector(`.nav-tab[onclick*="${t}"]`).classList.add('active'); document.getElementById('chats-list').classList.toggle('hidden', t!=='chats'); document.getElementById('search-list').classList.toggle('hidden', t!=='search'); }
 function openModal(id) { document.getElementById(id).classList.add('active'); }
@@ -220,3 +218,4 @@ function initGlobalNotifications() { db.collection('chats').where('participants'
 function showToast(txt) { const t = document.createElement('div'); t.className = 'toast'; t.innerText = txt; document.getElementById('toast-container').appendChild(t); setTimeout(()=>t.classList.add('show'),10); setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3000); }
 function setTheme(t) { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); document.querySelectorAll('.theme-circle').forEach(c => c.classList.toggle('active', c.classList.contains('t-'+t))); }
 function initTheme() { setTheme(localStorage.getItem('theme') || 'orange'); }
+async function triggerDeleteFromModal() { if(confirm('Удалить сообщение?')) { await db.collection('chats').doc(currentChat.id).collection('messages').doc(tempActionMsgId).delete(); closeModal('msg-options-modal'); } }
