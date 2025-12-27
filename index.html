@@ -4,140 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VZ.FORUM | Messenger</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
-
-    <div id="loading-screen">
-        <div class="loader-spinner"></div>
-        <div style="font-weight: 600; letter-spacing: 2px; color: var(--text-muted); font-size: 14px; margin-top: 20px;">ЗАГРУЗКА...</div>
-    </div>
-
-    <div class="ambient-light light-1"></div>
-    <div class="ambient-light light-2"></div>
-    <div id="toast-container"></div>
-
+    <div id="loading-screen"><div class="loader-spinner"></div><div style="font-weight:600;margin-top:20px;">ЗАГРУЗКА...</div></div>
+    <div class="ambient-light light-1"></div><div class="ambient-light light-2"></div><div id="toast-container"></div>
     <div id="auth-section" class="auth-wrapper hidden">
         <div class="auth-card">
             <div class="auth-logo">VZ.FORUM</div>
             <div id="login-form">
-                <div class="input-group"><span class="input-icon">✉</span><input type="email" id="login-email" placeholder="Email"></div>
-                <div class="input-group"><span class="input-icon">🔒</span><input type="password" id="login-password" placeholder="Пароль"></div>
-                <button class="btn btn-primary" id="btn-login" style="width: 100%;" onclick="login()">Войти</button>
+                <div class="input-group"><input type="email" id="login-email" placeholder="Email"></div>
+                <div class="input-group"><input type="password" id="login-password" placeholder="Пароль"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="login()">Войти</button>
                 <div class="auth-switch">Нет аккаунта? <span onclick="toggleAuth('register')">Создать</span></div>
             </div>
             <div id="register-form" class="hidden">
-                <div class="input-group"><span class="input-icon">✉</span><input type="email" id="register-email" placeholder="Email"></div>
-                <div class="input-group"><span class="input-icon">🔒</span><input type="password" id="register-password" placeholder="Пароль"></div>
-                <div class="input-group"><span class="input-icon">🔒</span><input type="password" id="register-confirm" placeholder="Повторите пароль"></div>
-                <button class="btn btn-primary" id="btn-register" style="width: 100%;" onclick="register()">Регистрация</button>
+                <div class="input-group"><input type="email" id="register-email" placeholder="Email"></div>
+                <div class="input-group"><input type="password" id="register-password" placeholder="Пароль"></div>
+                <div class="input-group"><input type="password" id="register-confirm" placeholder="Повторите пароль"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="register()">Регистрация</button>
                 <div class="auth-switch">Есть аккаунт? <span onclick="toggleAuth('login')">Войти</span></div>
             </div>
         </div>
     </div>
-
     <div id="app" class="hidden">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="user-mini" onclick="openMyProfile()">
-                    <div class="avatar" id="my-avatar-mini">U</div>
-                    <div><div style="font-weight: 700; font-size: 15px;" id="my-nickname-mini">User</div><div style="font-size: 11px; color: var(--accent);">● В сети</div></div>
-                </div>
-            </div>
-            <div class="nav-tabs">
-                <div class="nav-tab active" onclick="switchTab('chats')">Сообщения</div>
-                <div class="nav-tab" onclick="switchTab('search')">Поиск</div>
-            </div>
+        <div class="sidebar">
+            <div class="sidebar-header"><div class="user-mini" onclick="openMyProfile()"><div class="avatar" id="my-avatar-mini">U</div><div id="my-nickname-mini">User</div></div></div>
+            <div class="nav-tabs"><div class="nav-tab active" onclick="switchTab('chats')">Чаты</div><div class="nav-tab" onclick="switchTab('search')">Поиск</div></div>
             <div id="chats-list" class="list-wrap"></div>
-            <div id="search-list" class="list-wrap hidden">
-                <div class="input-group" style="padding: 0 10px;"><span class="input-icon" style="left: 20px;">🔍</span><input type="text" id="search-input" placeholder="Поиск username..."></div>
-                <div id="search-results"></div>
-            </div>
-            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
-                <button class="btn btn-ghost" style="width: 100%; color: var(--error); justify-content: flex-start;" onclick="logout()">Выйти из аккаунта</button>
-            </div>
+            <div id="search-list" class="list-wrap hidden"><input type="text" id="search-input" placeholder="Поиск..."><div id="search-results"></div></div>
+            <button class="btn btn-ghost" style="width:100%;color:red;" onclick="logout()">Выйти</button>
         </div>
-
         <div class="chat-area">
-            <div id="empty-state" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted);">
-                <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.2;">💬</div>
-                <div style="font-size: 18px;">Выберите чат для общения</div>
-            </div>
-            <div id="chat-view" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
-                <div class="chat-topbar" onclick="openChatInfo()">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <button class="icon-btn back-btn" onclick="closeChatMobile()">←</button>
-                        <div class="avatar" id="header-avatar">U</div>
-                        <div><div style="font-weight: 700; font-size: 17px;" id="header-name">Name</div><div style="font-size: 12px; color: var(--text-muted);" id="header-sub">информация</div></div>
-                    </div>
-                </div>
-                <div id="messages-container" class="messages-list"></div>
+            <div id="empty-state">Выберите чат</div>
+            <div id="chat-view" class="hidden">
+                <div class="chat-topbar" onclick="openChatInfo()"><div class="avatar" id="header-avatar">U</div><div id="header-name">Name</div></div>
+                <div id="messages-container"></div>
                 <div class="input-bar">
-                    <div id="edit-indicator" class="hidden">✏️ Редактирование <button onclick="cancelEdit()">✕</button></div>
-                    <div id="upload-indicator" class="hidden">⏳ Загрузка...</div>
-                    <label class="icon-btn" style="flex-shrink: 0; cursor: pointer;"><input type="file" id="file-input" hidden multiple>📎</label>
-                    <textarea id="message-input" rows="1" placeholder="Напишите сообщение..."></textarea>
-                    <button class="btn btn-primary" onclick="handleSend()" style="padding: 12px; border-radius: 50%; width: 46px; height: 46px;">➤</button>
+                    <div id="upload-indicator" class="hidden">⏳...</div>
+                    <label class="icon-btn"><input type="file" id="file-input" hidden multiple>📎</label>
+                    <textarea id="message-input" placeholder="Сообщение..."></textarea>
+                    <button class="btn btn-primary" onclick="handleSend()">➤</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="msg-options-modal" class="modal-bg">
-        <div class="modal-panel" style="max-width: 320px; padding: 25px;">
-            <h3 style="text-align: center; margin-bottom: 20px;">Действия</h3>
-            <button class="btn btn-danger" onclick="triggerDeleteFromModal()" style="width: 100%;">🗑 Удалить</button>
-            <button class="btn btn-ghost" onclick="closeModal('msg-options-modal')" style="margin-top: 15px; width: 100%;">Отмена</button>
-        </div>
-    </div>
-
     <div id="my-profile-modal" class="modal-bg">
         <div class="modal-panel">
-            <div class="profile-banner" id="my-banner-preview"><label class="profile-banner-overlay"><input type="file" onchange="uploadBanner(this.files[0])" hidden accept="image/*">ИЗМЕНИТЬ БАННЕР</label></div>
-            <div class="profile-header">
-                <div class="avatar-large-wrapper"><div class="avatar-big"><div id="my-profile-avatar-content">U</div><label class="avatar-overlay"><input type="file" onchange="uploadAvatar(this.files[0])" hidden accept="image/*">ИЗМЕНИТЬ</label></div></div>
-            </div>
+            <div class="profile-banner" id="my-banner-preview"><label class="avatar-overlay"><input type="file" onchange="uploadBanner(this.files[0])" hidden>ФОН</label></div>
+            <div class="profile-header"><div class="avatar-big"><div id="my-profile-avatar-content">U</div><label class="avatar-overlay"><input type="file" onchange="uploadAvatar(this.files[0])" hidden>ФОТО</label></div></div>
             <div class="profile-body">
-                <div class="theme-selector">
-                    <div class="theme-circle t-orange" onclick="setTheme('orange')"></div>
-                    <div class="theme-circle t-blue" onclick="setTheme('blue')"></div>
-                    <div class="theme-circle t-purple" onclick="setTheme('purple')"></div>
-                    <div class="theme-circle t-green" onclick="setTheme('green')"></div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="input-group"><span class="input-icon">👤</span><input type="text" id="profile-nickname" placeholder="Никнейм"></div>
-                    <div class="input-group"><span class="input-icon">@</span><input type="text" id="profile-username" placeholder="Username"></div>
-                    <textarea id="profile-bio" rows="2" placeholder="О себе..."></textarea>
-                </div>
-                <div style="margin-top: 25px; display: flex; gap: 10px;">
-                    <button class="btn btn-ghost" style="flex: 1;" onclick="closeModal('my-profile-modal')">Отмена</button>
-                    <button class="btn btn-primary" style="flex: 1;" onclick="saveProfile()">Сохранить</button>
-                </div>
+                <div class="theme-selector"><div class="theme-circle t-orange" onclick="setTheme('orange')"></div><div class="theme-circle t-blue" onclick="setTheme('blue')"></div><div class="theme-circle t-purple" onclick="setTheme('purple')"></div><div class="theme-circle t-green" onclick="setTheme('green')"></div></div>
+                <input type="text" id="profile-nickname"><input type="text" id="profile-username"><textarea id="profile-bio"></textarea>
+                <button class="btn btn-primary" onclick="saveProfile()">Сохранить</button>
+                <button class="btn btn-ghost" onclick="closeModal('my-profile-modal')">Закрыть</button>
             </div>
         </div>
     </div>
-
     <div id="user-profile-modal" class="modal-bg">
-        <div class="modal-panel">
-            <div class="profile-banner" id="view-banner"></div>
-            <div class="profile-header">
-                <div class="avatar-large-wrapper"><div class="avatar-big" style="border: none;"><div id="view-avatar">U</div></div></div>
-            </div>
-            <div class="profile-body" style="text-align: center;">
-                <h2 id="view-nickname" style="margin-bottom: 5px;">Nick</h2>
-                <p id="view-username" style="color: var(--accent); margin-bottom: 20px;">@name</p>
-                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; text-align: left;"><p id="view-bio">...</p></div>
-                <button class="btn btn-ghost" style="width: 100%; margin-top: 20px;" onclick="closeModal('user-profile-modal')">Закрыть</button>
-            </div>
-        </div>
+        <div class="modal-panel"><div class="profile-banner" id="view-banner"></div><div class="profile-body"><h2 id="view-nickname"></h2><p id="view-bio"></p><button class="btn btn-ghost" onclick="closeModal('user-profile-modal')">Закрыть</button></div></div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
