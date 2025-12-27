@@ -111,7 +111,10 @@
         .nav-tab.active { color: var(--text-main); font-weight: 600; }
         .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent); transition: var(--trans); }
         .list-wrap { flex: 1; overflow-y: auto; padding: 15px; }
-        .chat-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; cursor: pointer; transition: var(--trans); margin-bottom: 4px; }
+        
+        /* --- NEW: Smooth Animation for List Items --- */
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; cursor: pointer; transition: var(--trans); margin-bottom: 4px; animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
         .chat-item:hover { background: var(--bg-hover); transform: translateX(4px); }
         .chat-name { font-weight: 600; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 5px; }
         .chat-last { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
@@ -120,7 +123,7 @@
         .chat-topbar { height: 75px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); z-index: 10; cursor: pointer; }
         .messages-list { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         
-        .msg-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; max-width: 75%; }
+        .msg-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; max-width: 75%; animation: slideIn 0.3s ease forwards; }
         
         .msg-avatar { 
             width: 32px; height: 32px; 
@@ -137,9 +140,9 @@
             display: block;
         }
 
-        .msg { padding: 12px 18px; border-radius: 20px; position: relative; font-size: 15px; line-height: 1.5; animation: fadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); word-wrap: break-word; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .msg.in { align-self: flex-start; background: var(--bg-element); color: var(--text-main); border-bottom-left-radius: 4px; max-width: 100%; }
-        .msg.out { max-width: 70%; align-self: flex-end; background: var(--accent); color: #09090b; border-bottom-right-radius: 4px; font-weight: 600; box-shadow: 0 4px 20px var(--accent-glow); cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .msg { padding: 12px 18px; border-radius: 20px; position: relative; font-size: 15px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .msg.in { align-self: flex-start; background: var(--bg-element); color: var(--text-main); border-bottom-left-radius: 4px; max-width: 100%; animation: slideIn 0.3s ease forwards; }
+        .msg.out { max-width: 70%; align-self: flex-end; background: var(--accent); color: #09090b; border-bottom-right-radius: 4px; font-weight: 600; box-shadow: 0 4px 20px var(--accent-glow); cursor: pointer; transition: 0.2s; margin-bottom: 8px; animation: slideIn 0.3s ease forwards; }
         .msg.out:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .msg-time { font-size: 10px; opacity: 0.6; text-align: right; margin-top: 4px; }
         .input-bar { padding: 20px 30px; background: rgba(0,0,0,0.2); display: flex; align-items: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -368,14 +371,23 @@
 
         let currentUser = null, currentChat = null, currentChatData = null, chatsListener = null, messagesListener = null;
         let editMsgId = null, tempActionMsgId = null, tempActionMsgText = null;
-        let userCache = {}; 
+        let userCache = {};
+        let searchTimeout = null; // FIX: Debounce
 
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             const input = document.getElementById('message-input');
             input.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
             input.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
-            document.getElementById('search-input').addEventListener('input', e => { setTimeout(() => searchUsers(e.target.value), 500); });
+            
+            // FIX: Search debounce
+            document.getElementById('search-input').addEventListener('input', e => { 
+                clearTimeout(searchTimeout);
+                const val = e.target.value.trim();
+                if(!val) { document.getElementById('search-results').innerHTML = ''; return; }
+                searchTimeout = setTimeout(() => searchUsers(val), 500); 
+            });
+            
             document.getElementById('file-input').addEventListener('change', e => { if(e.target.files.length) uploadFiles(e.target.files); });
         });
 
@@ -452,7 +464,7 @@
         }
         function toggleAuth(type) { document.getElementById('login-form').classList.toggle('hidden', type !== 'login'); document.getElementById('register-form').classList.toggle('hidden', type !== 'register'); }
 
-        // --- CHAT LOADING (ONLY DIRECT MESSAGES) ---
+        // --- CHAT LOADING ---
         function loadChats() {
             if(chatsListener) chatsListener(); 
             
@@ -469,6 +481,7 @@
                 });
                 
                 chats.sort((a,b) => {
+                    // FIX: Handle missing timestamps (new messages locally)
                     const tA = a.lastMessageTime ? a.lastMessageTime.toMillis() : Date.now();
                     const tB = b.lastMessageTime ? b.lastMessageTime.toMillis() : Date.now();
                     return tB - tA;
@@ -481,6 +494,8 @@
                     return; 
                 }
                 
+                // Add staggered animation delay
+                let delay = 0;
                 for(const chat of chats) {
                     let name, avatar;
                     const otherId = chat.participants.find(id => id !== currentUser.uid); 
@@ -491,10 +506,13 @@
                     name = uData.nickname; 
                     avatar = uData.avatarURL;
                     
-                    const time = chat.lastMessageTime ? new Date(chat.lastMessageTime.toDate()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+                    const time = chat.lastMessageTime ? new Date(chat.lastMessageTime.toDate()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '...';
                     
                     const div = document.createElement('div'); 
                     div.className = 'chat-item'; 
+                    div.style.animationDelay = `${delay}s`; // Stagger animation
+                    delay += 0.05;
+
                     div.onclick = () => openChat(chat);
                     div.innerHTML = `<div class="avatar">${avatar ? `<img src="${avatar}">` : name?name[0]:'?'}</div><div style="flex:1; overflow:hidden;"><div style="display:flex; justify-content:space-between; margin-bottom:4px;"><div class="chat-name">${name}</div><div style="font-size:11px; color:var(--text-muted);">${time}</div></div><div class="chat-last">${chat.lastMessage || 'Нет сообщений'}</div></div>`;
                     list.appendChild(div);
@@ -503,9 +521,21 @@
         }
 
         async function searchUsers(q) {
-            if(!q) return; const res = document.getElementById('search-results'); res.innerHTML = 'Поиск...';
+            const res = document.getElementById('search-results'); res.innerHTML = 'Поиск...';
             const snap = await db.collection('users').where('username', '>=', q).where('username', '<=', q+'\uf8ff').limit(5).get();
-            res.innerHTML = ''; snap.forEach(doc => { if(doc.id !== currentUser.uid) { const u = doc.data(); const div = document.createElement('div'); div.className = 'chat-item'; div.onclick = () => createDirectChat(doc.id); div.innerHTML = `<div class="avatar">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div><div class="chat-name">${u.nickname}</div><div style="font-size:12px;">@${u.username}</div></div>`; res.appendChild(div); } });
+            res.innerHTML = ''; 
+            snap.forEach(doc => { 
+                if(doc.id !== currentUser.uid) { 
+                    const u = doc.data(); 
+                    const div = document.createElement('div'); 
+                    div.className = 'chat-item'; 
+                    div.style.animation = 'none'; div.style.opacity = '1'; // No animation for search results
+                    div.onclick = () => createDirectChat(doc.id); 
+                    div.innerHTML = `<div class="avatar">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div><div class="chat-name">${u.nickname}</div><div style="font-size:12px;">@${u.username}</div></div>`; 
+                    res.appendChild(div); 
+                } 
+            });
+            if(res.innerHTML === '') res.innerHTML = '<div style="text-align:center; padding:10px; opacity:0.5;">Ничего не найдено</div>';
         }
         
         async function createDirectChat(uid) {
@@ -544,8 +574,14 @@
                     if(change.type === 'modified') { const el = document.getElementById(change.doc.id); if(el) el.innerHTML = renderMsgInnerHtml(change.doc.data()); }
                     if(change.type === 'removed') { const el = document.getElementById(change.doc.id); if(el) el.remove(); }
                 });
-                cont.scrollTop = cont.scrollHeight;
+                scrollToBottom();
             });
+        }
+        
+        // FIX: Scroll Helper
+        function scrollToBottom() {
+            const cont = document.getElementById('messages-container');
+            cont.scrollTop = cont.scrollHeight;
         }
 
         async function resolveUserAvatar(uid, targetId) {
@@ -609,13 +645,15 @@
                                 (typeof d.fileURL === 'string' && d.fileURL.match(/\.(jpeg|jpg|gif|png|webp|bmp)$/i));
 
                 if (isImage) {
-                    content = `<img src="${d.fileURL}" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Загрузка фото...">`;
+                    // FIX: Trigger scroll on image load
+                    content = `<img src="${d.fileURL}" onload="scrollToBottom()" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Загрузка...">`;
                 } else {
                     content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${d.fileName || 'Файл'}</div><div class="file-meta">Открыть</div></div></a>`;
                 }
             }
 
-            const time = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...';
+            // FIX: Timestamp check
+            const time = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : 'отправка...';
             
             if (!content && d.type !== 'file') content = '<span style="opacity:0.5; font-style:italic;">(пустое сообщение)</span>';
 
@@ -631,8 +669,12 @@
         
         async function handleSend() {
             const inp = document.getElementById('message-input'), txt = inp.value.trim();
-            if(!txt || !currentChat) return;
-            if(editMsgId) { await db.collection('chats').doc(currentChat.id).collection('messages').doc(editMsgId).update({ text: txt, edited: true }); cancelEdit(); }
+            if(!txt || !currentChat) return; // FIX: Prevent empty spaces
+            
+            if(editMsgId) { 
+                await db.collection('chats').doc(currentChat.id).collection('messages').doc(editMsgId).update({ text: txt, edited: true }); 
+                cancelEdit(); 
+            }
             else { 
                 inp.value = ''; inp.style.height='auto';
                 await db.collection('chats').doc(currentChat.id).collection('messages').add({ text: txt, senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
