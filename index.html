@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Messenger</title>
+    <title>Messenger Fixed</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -365,6 +365,17 @@
         let userCache = {};
         let searchTimeout = null;
 
+        // --- ВАЖНАЯ ФУНКЦИЯ: Защита от HTML тегов ---
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             const input = document.getElementById('message-input');
@@ -384,27 +395,19 @@
             document.getElementById('file-input').addEventListener('change', e => { if(e.target.files.length) uploadFiles(e.target.files); });
         });
 
-        // --- ИСПРАВЛЕННАЯ ЛОГИКА АВТОРИЗАЦИИ (БЕЗ ЗАВИСАНИЙ) ---
+        // АВТОРИЗАЦИЯ
         auth.onAuthStateChanged(async user => {
             const loader = document.getElementById('loading-screen');
-            
-            // ЗАЩИТНЫЙ ТАЙМЕР: Если через 4 секунды ничего не загрузилось - сбрасываем
             const safetyTimer = setTimeout(() => {
                 if(loader && loader.classList.contains('active')) {
-                    console.warn("Loading timeout forced.");
                     loader.classList.remove('active');
-                    if(!currentUser) {
-                         document.getElementById('auth-section').classList.remove('hidden');
-                    }
+                    if(!currentUser) document.getElementById('auth-section').classList.remove('hidden');
                 }
             }, 4000);
 
             if (user) {
                 try {
-                    // Пытаемся получить профиль
                     let doc = await db.collection('users').doc(user.uid).get();
-                    
-                    // Если не нашли сразу, делаем одну попытку через секунду (на случай регистрации)
                     if (!doc.exists) {
                         await new Promise(r => setTimeout(r, 1200));
                         doc = await db.collection('users').doc(user.uid).get();
@@ -417,7 +420,6 @@
                              clearTimeout(safetyTimer);
                              return;
                         }
-                        
                         currentUser = { uid: user.uid, ...doc.data() };
                         loader.classList.remove('active');
                         document.getElementById('app').classList.remove('hidden');
@@ -426,26 +428,17 @@
                         loadChats(); 
                         initGlobalNotifications();
                     } else {
-                        // КРИТИЧЕСКИЙ МОМЕНТ: Если профиля нет даже после ожидания -> это "зомби" сессия.
-                        // Нужно разлогинить пользователя, иначе будет вечная загрузка.
-                        console.error("User profile missing. Forcing logout.");
                         await auth.signOut(); 
-                        // После signOut этот listener сработает снова с user=null и уберет лоадер
                     }
                 } catch (e) {
-                    console.error("Auth error:", e);
-                    // При ошибке сети или доступа - тоже выходим, чтобы не висеть
                     await auth.signOut();
                 }
             } else { 
-                // Пользователь не вошел
                 currentUser = null;
                 loader.classList.remove('active');
                 document.getElementById('auth-section').classList.remove('hidden'); 
                 document.getElementById('app').classList.add('hidden');
             }
-            
-            // Очищаем защитный таймер, если все прошло штатно
             clearTimeout(safetyTimer);
         });
 
@@ -458,7 +451,7 @@
                 if (data.success) return data.data.url;
                 else throw new Error("Upload failed");
             } catch (error) {
-                alert("Ошибка загрузки изображения.");
+                console.error("ImgBB Error:", error);
                 return null;
             }
         }
@@ -482,7 +475,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                alert("Ошибка загрузки файла. Попробуйте файл поменьше или позже.");
+                alert("Ошибка загрузки файла.");
                 return null;
             }
         }
@@ -510,7 +503,6 @@
             
             try { 
                 const cred = await auth.createUserWithEmailAndPassword(e, p); 
-                // Пишем в базу
                 await db.collection('users').doc(cred.user.uid).set({ 
                     email: e, 
                     nickname: e.split('@')[0], 
@@ -519,7 +511,6 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
                     banned: false 
                 }); 
-                // onAuthStateChanged сработает сам
             } catch(err) { 
                 showToast(err.message); 
                 setButtonLoading('btn-register', false, 'Зарегистрироваться'); 
@@ -540,7 +531,6 @@
 
         function loadChats() {
             if(chatsListener) chatsListener(); 
-            
             const list = document.getElementById('chats-list'); 
             if(list.children.length === 0) list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">Загрузка...</div>';
             
@@ -585,13 +575,19 @@
                         name = userCache[otherId].nickname;
                         avatar = userCache[otherId].avatarURL;
                     } else {
+                        // Асинхронная подгрузка данных юзера для списка
                         db.collection('users').doc(otherId).get().then(s => {
                             if(s.exists) {
                                 userCache[otherId] = s.data();
                                 const el = document.getElementById(chatId);
                                 if(el) {
                                     el.querySelector('.chat-name').innerText = s.data().nickname;
-                                    el.querySelector('.avatar').innerHTML = s.data().avatarURL ? `<img src="${s.data().avatarURL}">` : s.data().nickname[0];
+                                    const avEl = el.querySelector('.avatar');
+                                    if (s.data().avatarURL) {
+                                        avEl.innerHTML = `<img src="${s.data().avatarURL}" onerror="this.parentElement.innerHTML='${s.data().nickname[0]}'">`;
+                                    } else {
+                                        avEl.innerHTML = s.data().nickname[0];
+                                    }
                                 }
                             }
                         });
@@ -599,14 +595,17 @@
 
                     const time = chat.lastMessageTime ? new Date(chat.lastMessageTime.toDate()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
                     
+                    // Экранируем последнее сообщение в списке чатов тоже!
+                    const safeLastMessage = escapeHtml(chat.lastMessage);
+
                     const htmlContent = `
-                        <div class="avatar">${avatar ? `<img src="${avatar}">` : name[0]}</div>
+                        <div class="avatar">${avatar ? `<img src="${avatar}" onerror="this.parentElement.innerHTML='${name[0]}'">` : name[0]}</div>
                         <div style="flex:1; overflow:hidden;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                                 <div class="chat-name">${name}</div>
                                 <div style="font-size:11px; color:var(--text-muted);">${time}</div>
                             </div>
-                            <div class="chat-last">${chat.lastMessage || 'Нет сообщений'}</div>
+                            <div class="chat-last">${safeLastMessage || 'Нет сообщений'}</div>
                         </div>`;
 
                     if (!div) {
@@ -635,7 +634,7 @@
                     const div = document.createElement('div'); 
                     div.className = 'chat-item'; 
                     div.onclick = () => createDirectChat(doc.id); 
-                    div.innerHTML = `<div class="avatar">${u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0]}</div><div><div class="chat-name">${u.nickname}</div><div style="font-size:12px;">@${u.username}</div></div>`; 
+                    div.innerHTML = `<div class="avatar">${u.avatarURL ? `<img src="${u.avatarURL}" onerror="this.parentElement.innerHTML='${u.nickname[0]}'">` : u.nickname[0]}</div><div><div class="chat-name">${u.nickname}</div><div style="font-size:12px;">@${u.username}</div></div>`; 
                     res.appendChild(div); 
                 } 
             });
@@ -687,7 +686,7 @@
             
             hName.textContent = uData.nickname; 
             hSub.textContent = '@'+uData.username; 
-            hAv.innerHTML = uData.avatarURL ? `<img src="${uData.avatarURL}">` : (uData.nickname ? uData.nickname[0] : '?');
+            hAv.innerHTML = uData.avatarURL ? `<img src="${uData.avatarURL}" onerror="this.parentElement.innerHTML='${uData.nickname[0]}'">` : (uData.nickname ? uData.nickname[0] : '?');
             
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden-mobile');
             document.getElementById('empty-state').classList.add('hidden'); 
@@ -701,7 +700,7 @@
             cont.innerHTML = '';
             
             messagesListener = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc').onSnapshot(snap => {
-                const isNearBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 150;
+                const isNearBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 200;
                 
                 snap.docChanges().forEach(change => {
                     if(change.type === 'added') renderMessage(change.doc.data(), change.doc.id);
@@ -709,10 +708,9 @@
                     if(change.type === 'removed') { const el = document.getElementById(change.doc.id); if(el) el.remove(); }
                 });
                 
-                // Умный скролл: если мы внизу или это первая загрузка - скроллим
+                // Скроллим если это первая загрузка или юзер внизу
                 if (snap.docChanges().length > 0) {
-                     // Если сообщения только загрузились (первый раз) или пользователь внизу
-                     if(cont.scrollTop === 0 || isNearBottom) {
+                     if(isNearBottom || cont.children.length < 10) {
                          scrollToBottom();
                      }
                 }
@@ -721,7 +719,8 @@
         
         function scrollToBottom() {
             const cont = document.getElementById('messages-container');
-            setTimeout(() => { cont.scrollTop = cont.scrollHeight; }, 50);
+            // Небольшая задержка чтобы картинки успели занять место (частично)
+            setTimeout(() => { cont.scrollTop = cont.scrollHeight; }, 100);
         }
 
         async function resolveUserAvatar(uid, targetId) {
@@ -732,7 +731,7 @@
             const u = userCache[uid];
             const el = document.getElementById(targetId);
             if (el && u) {
-                el.innerHTML = u.avatarURL ? `<img src="${u.avatarURL}">` : u.nickname[0];
+                el.innerHTML = u.avatarURL ? `<img src="${u.avatarURL}" onerror="this.parentElement.innerHTML='${u.nickname[0]}'">` : u.nickname[0];
             }
         }
 
@@ -744,7 +743,7 @@
                 const div = document.createElement('div');
                 div.id = id;
                 div.style.cssText = "align-self:center;font-size:11px;opacity:0.7;background:transparent;box-shadow:none;padding:5px;";
-                div.innerHTML = d.text;
+                div.textContent = d.text; // Use textContent for system messages too
                 document.getElementById('messages-container').appendChild(div);
                 return;
             }
@@ -779,16 +778,21 @@
         }
 
         function renderMsgInnerHtml(d) {
-            let content = d.text || ''; 
+            // --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: Экранирование HTML ---
+            // Теперь <script> станет &lt;script&gt; и отобразится как текст
+            let content = escapeHtml(d.text || ''); 
             
             if(d.type === 'file' && d.fileURL) {
-                const isImage = (d.fileType && d.fileType.startsWith('image/')) || 
-                                (typeof d.fileURL === 'string' && d.fileURL.match(/\.(jpeg|jpg|gif|png|webp|bmp)$/i));
+                // Проверяем, действительно ли это прямая ссылка на картинку (от ImgBB)
+                // Gofile ссылки не заканчиваются на расширения картинок обычно, и они ведут на HTML страницу
+                const isImage = (d.fileType && d.fileType.startsWith('image/')) && 
+                                (d.fileURL.includes('ibb.co') || d.fileURL.match(/\.(jpeg|jpg|gif|png|webp)$/i));
 
                 if (isImage) {
-                    content = `<img src="${d.fileURL}" onload="scrollToBottom()" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Загрузка...">`;
+                    content = `<img src="${d.fileURL}" onerror="this.style.display='none'" onload="document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight" style="max-width:100%; min-width: 100px; min-height: 100px; border-radius:10px; cursor:pointer; display:block; object-fit: cover;" onclick="window.open('${d.fileURL}')" alt="Фото">`;
                 } else {
-                    content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${d.fileName || 'Файл'}</div><div class="file-meta">Открыть</div></div></a>`;
+                    // Все остальное (включая Gofile) отображаем как красивую ссылку
+                    content = `<a href="${d.fileURL}" target="_blank" class="file-card"><div class="file-icon">${d.fileType && d.fileType.startsWith('video/')?'🎬':'📁'}</div><div class="file-info"><div class="file-name">${escapeHtml(d.fileName) || 'Файл'}</div><div class="file-meta">Открыть файл</div></div></a>`;
                 }
             }
 
@@ -809,7 +813,6 @@
             const inp = document.getElementById('message-input'), txt = inp.value.trim();
             if(!txt || !currentChat) return; 
             
-            // Сразу скроллим вниз при отправке
             scrollToBottom();
 
             if(editMsgId) { 
@@ -818,6 +821,7 @@
             }
             else { 
                 inp.value = ''; inp.style.height='auto';
+                // Отправляем обычный текст, он будет экранирован при получении (отображении)
                 await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
                     text: txt, 
                     senderId: currentUser.uid, 
@@ -838,8 +842,13 @@
             
             for(let file of files) {
                 let url = null;
-                if (file.type.startsWith('image/') && file.size < 32 * 1024 * 1024) { url = await uploadToImgBB(file); } 
-                else { url = await uploadToGofile(file); }
+                // ЛОГИКА: Картинки (не слишком огромные) шлем на ImgBB для превью
+                // Остальное на Gofile
+                if (file.type.startsWith('image/') && file.size < 30 * 1024 * 1024) { 
+                    url = await uploadToImgBB(file); 
+                } else { 
+                    url = await uploadToGofile(file); 
+                }
 
                 if (url) {
                     await db.collection('chats').doc(currentChat.id).collection('messages').add({ 
@@ -877,7 +886,8 @@
             document.getElementById('view-nickname').innerText = u.nickname;
             document.getElementById('view-username').innerText = '@'+u.username;
             document.getElementById('view-bio').innerText = u.bio || '...';
-            document.getElementById('view-avatar').innerHTML = u.avatarURL?`<img src="${u.avatarURL}">`:u.nickname[0];
+            // Fallback для аватарки в профиле
+            document.getElementById('view-avatar').innerHTML = u.avatarURL?`<img src="${u.avatarURL}" onerror="this.parentElement.innerHTML='${u.nickname[0]}'">`:u.nickname[0];
             const bnr = document.getElementById('view-banner');
             bnr.style.backgroundImage = u.bannerURL ? `url(${u.bannerURL})` : 'none';
             bnr.style.backgroundColor = u.bannerURL ? 'transparent' : 'var(--accent-glow)';
@@ -888,7 +898,7 @@
             document.getElementById('profile-nickname').value = currentUser.nickname;
             document.getElementById('profile-username').value = currentUser.username;
             document.getElementById('profile-bio').value = currentUser.bio || '';
-            document.getElementById('my-profile-avatar-content').innerHTML = currentUser.avatarURL ? `<img src="${currentUser.avatarURL}">` : currentUser.nickname[0];
+            document.getElementById('my-profile-avatar-content').innerHTML = currentUser.avatarURL ? `<img src="${currentUser.avatarURL}" onerror="this.parentElement.innerHTML='${currentUser.nickname[0]}'">` : currentUser.nickname[0];
             const bnr = document.getElementById('my-banner-preview');
             bnr.style.backgroundImage = currentUser.bannerURL ? `url(${currentUser.bannerURL})` : 'none';
             bnr.style.backgroundColor = currentUser.bannerURL ? 'transparent' : 'var(--accent-glow)';
@@ -910,28 +920,37 @@
         }
 
         async function uploadAvatar(file) { 
+            // Аватарки строго на ImgBB
             const u = await uploadToImgBB(file); 
-            await db.collection('users').doc(currentUser.uid).update({ avatarURL: u }); 
-            currentUser.avatarURL = u; 
-            updateMyProfileUI(); 
-            document.getElementById('my-profile-avatar-content').innerHTML = `<img src="${u}">`;
+            if(u) {
+                await db.collection('users').doc(currentUser.uid).update({ avatarURL: u }); 
+                currentUser.avatarURL = u; 
+                updateMyProfileUI(); 
+                document.getElementById('my-profile-avatar-content').innerHTML = `<img src="${u}">`;
+            } else {
+                showToast("Ошибка загрузки фото");
+            }
         }
         
         async function uploadBanner(file) { 
             const u = await uploadToImgBB(file); 
-            await db.collection('users').doc(currentUser.uid).update({ bannerURL: u }); 
-            currentUser.bannerURL = u; 
-            const bnr = document.getElementById('my-banner-preview');
-            bnr.style.backgroundImage = `url(${u})`;
-            bnr.style.backgroundColor = 'transparent';
+             if(u) {
+                await db.collection('users').doc(currentUser.uid).update({ bannerURL: u }); 
+                currentUser.bannerURL = u; 
+                const bnr = document.getElementById('my-banner-preview');
+                bnr.style.backgroundImage = `url(${u})`;
+                bnr.style.backgroundColor = 'transparent';
+             } else {
+                showToast("Ошибка загрузки баннера");
+             }
         }
 
         function updateMyProfileUI() { 
             document.getElementById('my-nickname-mini').innerText = currentUser.nickname; 
-            document.getElementById('my-avatar-mini').innerHTML = currentUser.avatarURL ? `<img src="${currentUser.avatarURL}">` : currentUser.nickname[0]; 
+            document.getElementById('my-avatar-mini').innerHTML = currentUser.avatarURL ? `<img src="${currentUser.avatarURL}" onerror="this.parentElement.innerHTML='${currentUser.nickname[0]}'">` : currentUser.nickname[0]; 
         }
 
-        function initGlobalNotifications() { db.collection('chats').where('participants','array-contains',currentUser.uid).onSnapshot(snap => { snap.docChanges().forEach(c => { if(c.type==='modified') { const d = c.doc.data(); if(d.lastMessageSender !== currentUser.uid && (!currentChat || currentChat.id !== c.doc.id)) { showToast(`Сообщение: ${d.lastMessage}`); } } }); }); }
+        function initGlobalNotifications() { db.collection('chats').where('participants','array-contains',currentUser.uid).onSnapshot(snap => { snap.docChanges().forEach(c => { if(c.type==='modified') { const d = c.doc.data(); if(d.lastMessageSender !== currentUser.uid && (!currentChat || currentChat.id !== c.doc.id)) { showToast(`Сообщение: ${escapeHtml(d.lastMessage)}`); } } }); }); }
         function showToast(txt) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = `<div>🔔</div><div>${txt.length>30?txt.slice(0,30)+'...':txt}</div>`; document.getElementById('toast-container').appendChild(t); setTimeout(()=>t.classList.add('show'),10); setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3000); }
         
         function initTheme() { const t = localStorage.getItem('theme') || 'orange'; setTheme(t); }
