@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Народный форум vzorkin</title>
+    <title>Messenger Fixed</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -63,7 +63,7 @@
         .hidden { display: none !important; }
         
         /* Кнопки */
-        .btn { border: none; cursor: pointer; padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: var(--trans); display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; overflow: hidden; }
+        .btn { border: none; cursor: pointer; padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: var(--trans); display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; overflow: hidden; text-decoration: none; }
         .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .btn-primary { background: var(--accent); color: #09090b; box-shadow: 0 4px 20px var(--accent-glow); }
         .btn-primary:not(:disabled):hover { background: var(--accent-hover); transform: translateY(-2px); }
@@ -114,12 +114,42 @@
         }
         .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .nav-tabs { display: flex; padding: 0 24px 10px; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* Вкладки навигации */
+        .nav-tabs { display: flex; padding: 0 24px 10px; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .nav-tab { font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; padding-bottom: 10px; position: relative; transition: var(--trans); }
         .nav-tab.active { color: var(--text-main); font-weight: 600; }
         .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 10px var(--accent); transition: var(--trans); }
+        
         .list-wrap { flex: 1; overflow-y: auto; padding: 15px; }
         
+        /* Стили для карточки приложения */
+        .app-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 25px 20px;
+            text-align: center;
+            margin: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .app-card::before {
+            content: ''; position: absolute; top: -50px; left: -50px; width: 100px; height: 100px;
+            background: var(--accent); opacity: 0.15; filter: blur(40px); border-radius: 50%;
+        }
+        .app-icon-large {
+            width: 80px; height: 80px; background: rgba(0,0,0,0.3);
+            border-radius: 20px; margin: 0 auto 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; color: var(--accent);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .app-title { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+        .app-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;}
+        .app-meta span { background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; }
+
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .chat-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; cursor: pointer; transition: var(--trans); margin-bottom: 4px; }
         .chat-item.new-item { animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
@@ -167,7 +197,6 @@
         /* --- НОВЫЙ ДИЗАЙН НАСТРОЕК ПРОФИЛЯ --- */
 
         .profile-settings-panel {
-            /* overflow: visible !important; УБРАНО ЧТОБЫ КНОПКИ НЕ ТОРЧАЛИ */
             background: #121214;
             display: flex;
             flex-direction: column;
@@ -219,11 +248,14 @@
             height: 110px;
             margin: -55px auto 0;
             z-index: 5;
+            flex-shrink: 0;
         }
 
         .avatar-big {
-            width: 100%;
-            height: 100%;
+            width: 100px;
+            height: 100px;
+            min-width: 100px;
+            min-height: 100px;
             border-radius: 50%;
             background: var(--bg-body);
             display: flex; align-items: center; justify-content: center;
@@ -232,7 +264,23 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             font-size: 36px;
         }
-        .avatar-big img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .avatar-big > div {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        .avatar-big img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            display: block;
+        }
 
         .avatar-btn {
             position: absolute;
@@ -244,7 +292,7 @@
         }
 
         .settings-body {
-            padding: 20px 30px 25px; /* Увеличен отступ снизу */
+            padding: 20px 30px 25px; 
         }
 
         .settings-title {
@@ -357,15 +405,6 @@
         .t-purple { background: linear-gradient(135deg, #d946ef, #8b5cf6); }
         .t-green { background: linear-gradient(135deg, #4ade80, #22c55e); }
 
-        .theme-option:hover { opacity: 1; transform: scale(1); }
-        .theme-option.active { 
-            opacity: 1; 
-            transform: scale(1.1); 
-            box-shadow: 0 4px 15px var(--accent-glow);
-            border: 2px solid white;
-        }
-
-        /* --- ИСПРАВЛЕННЫЙ БЛОК КНОПОК --- */
         .modal-actions {
             display: flex;
             align-items: center;
@@ -384,7 +423,6 @@
             padding: 0 10px;
         }
         
-        /* Для мобилок уменьшаем шрифт, чтобы точно влезло */
         @media (max-width: 480px) {
             .modal-actions .btn {
                 font-size: 14px;
@@ -457,12 +495,33 @@
             <div class="nav-tabs">
                 <div class="nav-tab active" onclick="switchTab('chats')">Сообщения</div>
                 <div class="nav-tab" onclick="switchTab('search')">Поиск</div>
+                <div class="nav-tab" onclick="switchTab('apps')">Приложения</div>
             </div>
+            
             <div id="chats-list" class="list-wrap"></div>
+            
             <div id="search-list" class="list-wrap hidden">
                 <div class="input-group" style="padding: 0 10px;"><span class="input-icon" style="left: 20px;">🔍</span><input type="text" id="search-input" placeholder="Поиск по username..."></div>
                 <div id="search-results"></div>
             </div>
+
+            <div id="apps-list" class="list-wrap hidden">
+                <div class="app-card">
+                    <div class="app-icon-large">💻</div>
+                    <div class="app-title">Наше приложение</div>
+                    <div class="app-meta">
+                        <span>Windows</span>
+                        <span>75 MB</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+                        Скачайте официальный клиент для форума. Удобный интерфейс, быстрые уведомления и ничего лишнего.
+                    </p>
+                    <a href="https://disk.yandex.ru/d/MvLFXg3bu9c2bA" target="_blank" class="btn btn-primary" style="width: 100%;">
+                        ⬇ Скачать (Yandex.Disk)
+                    </a>
+                </div>
+            </div>
+
             <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
                 <button class="btn btn-ghost" style="width: 100%; color: var(--error); justify-content: flex-start;" onclick="logout()">Выйти из аккаунта</button>
             </div>
@@ -1110,7 +1169,25 @@
             if(currentChat.otherUser) showUserProfile(currentChat.otherUser); 
         }
         
-        function switchTab(t) { document.querySelectorAll('.nav-tab').forEach(e=>e.classList.remove('active')); document.querySelector(`.nav-tab[onclick="switchTab('${t}')"]`).classList.add('active'); document.getElementById('chats-list').classList.toggle('hidden', t!=='chats'); document.getElementById('search-list').classList.toggle('hidden', t!=='search'); }
+        function switchTab(t) { 
+            // Сбрасываем активность со всех вкладок
+            document.querySelectorAll('.nav-tab').forEach(e => e.classList.remove('active')); 
+            
+            // Активируем нужную вкладку
+            const activeTab = document.querySelector(`.nav-tab[onclick="switchTab('${t}')"]`);
+            if(activeTab) activeTab.classList.add('active'); 
+            
+            // Скрываем все списки
+            document.getElementById('chats-list').classList.add('hidden');
+            document.getElementById('search-list').classList.add('hidden');
+            document.getElementById('apps-list').classList.add('hidden');
+
+            // Показываем нужный список
+            if(t === 'chats') document.getElementById('chats-list').classList.remove('hidden');
+            if(t === 'search') document.getElementById('search-list').classList.remove('hidden');
+            if(t === 'apps') document.getElementById('apps-list').classList.remove('hidden');
+        }
+
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function closeChatMobile(e) { e.stopPropagation(); document.getElementById('sidebar').classList.remove('hidden-mobile'); }
         
