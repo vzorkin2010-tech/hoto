@@ -87,15 +87,6 @@
 
         .logo span { color: var(--primary-accent); }
 
-        .status-badge {
-            font-size: 12px;
-            background: rgba(255,255,255,0.05);
-            padding: 4px 10px;
-            border-radius: 20px;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-
         .hero {
             padding-top: 180px;
             padding-bottom: 100px;
@@ -150,50 +141,6 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 30px var(--primary-glow);
             filter: brightness(1.1);
-        }
-
-        .btn-secondary {
-            background: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--surface-hover);
-            border-color: rgba(255,255,255,0.2);
-        }
-
-        .specs {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .spec-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 16px;
-            text-align: left;
-        }
-
-        .spec-icon {
-            font-size: 24px;
-            margin-bottom: 12px;
-            display: block;
-        }
-
-        .spec-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--text-primary);
-        }
-
-        .spec-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
         }
 
         .gallery-section {
@@ -274,7 +221,6 @@
     <header>
         <div class="container nav-wrapper">
             <a href="#" class="logo">VZ<span>.FORUM</span></a>
-            <div class="status-badge">● Systems Operational</div>
         </div>
     </header>
 
@@ -296,27 +242,6 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         Скачать клиент (75 MB)
                     </a>
-                    <a href="#" class="btn btn-secondary">
-                        GitHub Source
-                    </a>
-                </div>
-            </div>
-
-            <div class="specs animate-enter delay-1">
-                <div class="spec-card">
-                    <span class="spec-icon">🛡️</span>
-                    <h3 class="spec-title">Приватность</h3>
-                    <p class="spec-desc">AES-256 шифрование. История чатов хранится только локально.</p>
-                </div>
-                <div class="spec-card">
-                    <span class="spec-icon">⚡</span>
-                    <h3 class="spec-title">Производительность</h3>
-                    <p class="spec-desc">Нативный движок C++. Минимальное потребление RAM.</p>
-                </div>
-                <div class="spec-card">
-                    <span class="spec-icon">💎</span>
-                    <h3 class="spec-title">Интерфейс</h3>
-                    <p class="spec-desc">Кастомизируемые темы и адаптивный UX для всех платформ.</p>
                 </div>
             </div>
         </section>
@@ -324,7 +249,6 @@
         <section class="container gallery-section animate-enter delay-2">
             <div class="gallery-header">
                 <h2>Интерфейс платформы</h2>
-                <p style="color: var(--text-secondary);">Минимализм в каждой детали.</p>
             </div>
             
             <div class="screenshot-grid">
