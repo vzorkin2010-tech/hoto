@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ФОРУМ | Secure Client</title>
+    <title>VZ.FORUM | Новый Форум</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
             --surface-color: rgba(20, 20, 20, 0.6);
             --border-color: rgba(255, 255, 255, 0.08);
             
-            /* Цветовая палитра: Оранжевый, Желтый, Белый */
+            /* Палитра: Оранжевый, Золотой, Белый */
             --primary-accent: #ff9f1c;          
             --primary-glow: rgba(255, 159, 28, 0.5); 
             --secondary-accent: #ffd700;        
@@ -38,9 +38,6 @@
             overflow-x: hidden;
             min-height: 100vh;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         /* Background Effects */
@@ -107,6 +104,62 @@
             padding: 0 24px;
         }
 
+        /* Floating Window (Header) */
+        header {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 12px 30px;
+            border-radius: 100px; /* Pill shape */
+            background: rgba(10, 10, 10, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 280px;
+        }
+
+        .logo-container {
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+        }
+
+        .logo-container span.highlight { 
+            color: var(--primary-accent);
+        }
+        
+        .logo-container span.divider {
+            color: rgba(255,255,255,0.2);
+            font-weight: 300;
+        }
+
+        .logo-container span.tagline {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--secondary-accent); /* Gold color for "New Forum" */
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding-top: 200px;
+            padding-bottom: 80px;
+            text-align: center;
+            position: relative;
+        }
+
         /* Animations */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(30px) scale(0.98); }
@@ -117,19 +170,11 @@
             animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
         }
-
+        
         .delay-2 { animation-delay: 0.3s; }
 
-        /* Hero Section */
-        .hero {
-            padding-top: 100px; /* Reduced padding since header is gone */
-            padding-bottom: 80px;
-            text-align: center;
-            position: relative;
-        }
-
         .hero h1 {
-            font-size: 80px; /* Increased size for impact */
+            font-size: 80px;
             line-height: 1.1;
             font-weight: 800;
             letter-spacing: -3px;
@@ -163,7 +208,7 @@
             align-items: center;
             justify-content: center;
             padding: 18px 42px;
-            border-radius: 100px; /* Fully rounded */
+            border-radius: 100px;
             font-weight: 700;
             text-decoration: none;
             transition: var(--transition);
@@ -255,6 +300,8 @@
             .hero p { font-size: 16px; padding: 0 20px; }
             .screenshot-grid { grid-template-columns: 1fr; gap: 20px; }
             .btn { width: 100%; border-radius: 16px; }
+            header { min-width: auto; width: calc(100% - 40px); }
+            .logo-container { font-size: 14px; }
         }
     </style>
 </head>
@@ -266,6 +313,14 @@
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
     </div>
+
+    <header>
+        <div class="logo-container">
+            VZ<span class="highlight">.FORUM</span>
+            <span class="divider">|</span>
+            <span class="tagline">НОВЫЙ ФОРУМ</span>
+        </div>
+    </header>
 
     <main>
         <section class="hero container">
