@@ -1,206 +1,355 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="orange">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VZ.FORUM Download</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VZ.FORUM | Secure Communication Client</title>
+    <meta name="description" content="Next-gen desktop client for secure messaging and low-latency calls.">
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-body: #09090b;       
-            --accent: #ff9f1c; 
-            --accent-glow: rgba(255, 159, 28, 0.5);
-            --accent-hover: #ffb24d;
-            --text-main: #ffffff;
-            --text-muted: #a1a1aa;
-            --grid-color: rgba(255, 255, 255, 0.03);
-            --trans: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --bg-color: #050505;
+            --surface-color: #121212;
+            --surface-hover: #1a1a1a;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-accent: #ff9f1c;
+            --primary-glow: rgba(255, 159, 28, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --font-main: 'Inter', sans-serif;
+            --transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            background-color: var(--bg-body); color: var(--text-main); height: 100vh; width: 100vw; 
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); 
-            background-size: 40px 40px;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 159, 28, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 159, 28, 0.05), transparent 25%);
         }
 
-        /* Фоновые огни */
-        .ambient-light { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.4; animation: float 15s infinite ease-in-out alternate; pointer-events: none; }
-        .light-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--accent), transparent 70%); }
-        .light-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--accent), transparent 70%); opacity: 0.2; animation-delay: -5s; }
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 40px) scale(1.1); } }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
 
-        /* Карточка */
-        .landing-card {
-            width: 90%;
-            max-width: 460px;
-            padding: 50px 30px;
-            background: rgba(15, 15, 18, 0.7);
-            backdrop-filter: blur(25px);
-            border-radius: 30px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
-            position: relative;
-            overflow: hidden;
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        header {
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(5, 5, 5, 0.7);
+        }
+
+        .nav-wrapper {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
         }
 
-        /* Свечение сверху карточки */
-        .landing-card::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            opacity: 0.5;
+        .logo {
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* ЛОГОТИП */
-        .logo-text {
-            font-family: 'Orbitron', sans-serif; /* Красивый шрифт */
-            font-size: 42px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 4px; /* Расширенный шрифт */
-            margin-bottom: 5px;
-            
-            /* Градиентный текст */
-            background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
+        .logo span { color: var(--primary-accent); }
+
+        .status-badge {
+            font-size: 12px;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .hero {
+            padding-top: 180px;
+            padding-bottom: 100px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+            background: linear-gradient(180deg, #fff 0%, #ccc 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            
-            /* Тень и свечение */
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-            z-index: 2;
         }
 
-        .logo-glow {
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 150px;
-            height: 40px;
-            background: var(--accent);
-            filter: blur(50px);
-            opacity: 0.4;
-            z-index: 1;
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto 40px;
         }
 
-        .subtitle {
-            font-size: 14px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .cta-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 60px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 32px;
+            border-radius: 12px;
             font-weight: 600;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        /* Платформы и размер */
-        .meta-tags {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .tag {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .tag.highlight {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(255, 159, 28, 0.05);
-        }
-
-        /* Описание */
-        .description {
-            font-size: 15px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 35px;
-            max-width: 320px;
-        }
-
-        /* Кнопка */
-        .btn-download {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: var(--text-main);
-            color: #000;
             text-decoration: none;
-            padding: 18px 40px;
+            transition: var(--transition);
+            font-size: 15px;
+        }
+
+        .btn-primary {
+            background: var(--primary-accent);
+            color: #000;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: var(--surface-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .spec-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 20px;
             border-radius: 16px;
+            text-align: left;
+        }
+
+        .spec-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .spec-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .spec-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .gallery-section {
+            padding: 80px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 80px;
+        }
+
+        .gallery-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .gallery-header h2 {
+            font-size: 32px;
             font-weight: 700;
-            font-size: 16px;
-            transition: var(--trans);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            width: 100%;
-            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .shot-card {
+            background: var(--surface-color);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
             overflow: hidden;
+            aspect-ratio: 16/9;
+            position: relative;
+            transition: var(--transition);
         }
 
-        .btn-download:hover {
+        .shot-card:hover {
+            border-color: var(--primary-accent);
             transform: scale(1.02);
-            background: var(--accent);
-            box-shadow: 0 10px 40px var(--accent-glow);
-        }
-        
-        .disclaimer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.2);
         }
 
+        .shot-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .shot-card:hover img {
+            opacity: 1;
+        }
+
+        footer {
+            padding: 60px 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .version-info {
+            margin-top: 12px;
+            font-family: monospace;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .screenshot-grid { grid-template-columns: 1fr; }
+            .cta-group { flex-direction: column; }
+            .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="ambient-light light-1"></div>
-    <div class="ambient-light light-2"></div>
-
-    <div class="landing-card">
-        <div class="logo-glow"></div>
-        
-        <h1 class="logo-text">VZ.FORUM</h1>
-        <div class="subtitle">Official Client</div>
-
-        <div class="meta-tags">
-            <div class="tag"><span style="font-size:16px">🪟</span> Windows</div>
-            <div class="tag"><span style="font-size:16px">🐧</span> Linux</div>
-            <div class="tag highlight">💾 75 MB</div>
+    <header>
+        <div class="container nav-wrapper">
+            <a href="#" class="logo">VZ<span>.FORUM</span></a>
+            <div class="status-badge">● Systems Operational</div>
         </div>
+    </header>
 
-        <p class="description">
-            Обновленные группы, стабильные звонки и полная приватность. Веб-версия отключена в целях безопасности.
-        </p>
+    <main>
+        <section class="hero container">
+            <div class="animate-enter">
+                <div style="margin-bottom: 20px; display: inline-block; padding: 6px 12px; border-radius: 100px; background: rgba(255, 159, 28, 0.1); color: var(--primary-accent); font-size: 13px; font-weight: 600;">
+                    New Release 2.4.0 Available
+                </div>
+                <h1>Пространство для<br>свободного общения</h1>
+                <p>
+                    VZ.FORUM — это децентрализованный клиент нового поколения. 
+                    Полная анонимность, отсутствие логов и мгновенная передача данных. 
+                    Веб-версия отключена для гарантии End-to-End шифрования.
+                </p>
 
-        <a href="https://disk.yandex.ru/d/lfjSzfUQ0ZxRAQ" target="_blank" class="btn-download">
-            <span>Скачать сейчас</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        </a>
+                <div class="cta-group">
+                    <a href="https://disk.yandex.ru/d/lfjSzfUQ0ZxRAQ" target="_blank" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Скачать клиент (75 MB)
+                    </a>
+                    <a href="#" class="btn btn-secondary">
+                        GitHub Source
+                    </a>
+                </div>
+            </div>
 
-        <div class="disclaimer">Build 2.4.0 • Secure Connection</div>
-    </div>
+            <div class="specs animate-enter delay-1">
+                <div class="spec-card">
+                    <span class="spec-icon">🛡️</span>
+                    <h3 class="spec-title">Приватность</h3>
+                    <p class="spec-desc">AES-256 шифрование. История чатов хранится только локально.</p>
+                </div>
+                <div class="spec-card">
+                    <span class="spec-icon">⚡</span>
+                    <h3 class="spec-title">Производительность</h3>
+                    <p class="spec-desc">Нативный движок C++. Минимальное потребление RAM.</p>
+                </div>
+                <div class="spec-card">
+                    <span class="spec-icon">💎</span>
+                    <h3 class="spec-title">Интерфейс</h3>
+                    <p class="spec-desc">Кастомизируемые темы и адаптивный UX для всех платформ.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="container gallery-section animate-enter delay-2">
+            <div class="gallery-header">
+                <h2>Интерфейс платформы</h2>
+                <p style="color: var(--text-secondary);">Минимализм в каждой детали.</p>
+            </div>
+            
+            <div class="screenshot-grid">
+                <div class="shot-card">
+                    <img src="app_main.jpg" alt="Dashboard">
+                </div>
+                <div class="shot-card">
+                    <img src="app_chat.jpg" alt="Secure Chat">
+                </div>
+                <div class="shot-card">
+                    <img src="app_call.jpg" alt="Voice Calls">
+                </div>
+                <div class="shot-card">
+                    <img src="app_settings.jpg" alt="Settings">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 VZ Foundation. Open Source Protocol.</p>
+            <div class="version-info">Build: 2.4.0-stable | Region: Global</div>
+        </div>
+    </footer>
 
 </body>
 </html>
